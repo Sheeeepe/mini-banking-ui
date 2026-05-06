@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Navbar } from './navbar';
+import { NotFound } from './not-found';
 
-describe('Navbar', () => {
-  let component: Navbar;
-  let fixture: ComponentFixture<Navbar>;
+describe('NotFound', () => {
+  let component: NotFound;
+  let fixture: ComponentFixture<NotFound>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Navbar]
+      imports: [NotFound]
     })
-      .compileComponents();
+    .compileComponents();
 
-    fixture = TestBed.createComponent(Navbar);
+    fixture = TestBed.createComponent(NotFound);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
