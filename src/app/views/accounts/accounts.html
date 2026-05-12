@@ -1,0 +1,55 @@
+
+<div class="min-h-[80vh] flex items-center justify-center p-6 bg-gray-50">
+  <div class="w-full max-w-md space-y-6">
+    <!-- Header -->
+    <div class="text-center">
+      <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-md">
+        <mat-icon class="text-white">account_balance</mat-icon>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-800">Gestione conti</h1>
+      <p class="text-gray-500 text-sm mt-1">Accedi a un conto esistente o creane uno nuovo</p>
+    </div>
+
+    <!-- Accesso esistente -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Accedi a un conto</h2>
+      <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+        <mat-label>ID Account</mat-label>
+        <input matInput type="number" [(ngModel)]="accountId" min="1" />
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="goToAccount()" class="w-full !mt-2">
+        <mat-icon matIconPrefix>login</mat-icon>
+        Vai all'account
+      </button>
+    </div>
+
+    <!-- Divisore -->
+    <div class="flex items-center gap-3">
+      <div class="flex-1 border-t border-gray-200"></div>
+      <span class="text-xs text-gray-400 font-medium">oppure</span>
+      <div class="flex-1 border-t border-gray-200"></div>
+    </div>
+
+    <!-- Nuovo account -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Nuovo account</h2>
+      <div class="space-y-3">
+        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+          <mat-label>Intestatario</mat-label>
+          <input matInput [(ngModel)]="ownerName" placeholder="Mario Rossi" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+          <mat-label>Valuta</mat-label>
+          <input matInput [(ngModel)]="currency" placeholder="EUR" />
+        </mat-form-field>
+      </div>
+      @if (error) {
+        <p class="text-red-500 text-sm mt-2">{{ error }}</p>
+      }
+      <button mat-raised-button color="primary" (click)="createAccount()" [disabled]="creating() || !ownerName || !currency" class="w-full !mt-4">
+        <mat-icon matIconPrefix>add_circle</mat-icon>
+        {{ creating() ? 'Creazione...' : 'Crea account' }}
+      </button>
+    </div>
+  </div>
+</div>

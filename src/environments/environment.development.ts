@@ -1,4 +1,4 @@
 export const environment = {
     production: false,
-    apiUrl: ''
+    apiUrl: 'https://mini-banking-api.up.railway.app'
 };
