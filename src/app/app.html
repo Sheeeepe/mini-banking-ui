@@ -1,20 +1,25 @@
 <app-navbar (menuToggle)="sidenav.toggle()"></app-navbar>
 <mat-sidenav-container class="sidenav-container">
-  <mat-sidenav #sidenav mode="side" opened class="app-sidenav">
+  <mat-sidenav
+    #sidenav
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="!isMobile()"
+    class="app-sidenav"
+  >
     <div class="sidenav-header">
       <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Navigazione</p>
     </div>
     <mat-nav-list class="pt-0">
-      <a mat-list-item routerLink="/home" routerLinkActive="active-link">
+      <a mat-list-item routerLink="/home" routerLinkActive="active-link" (click)="onNavClick(sidenav)">
         <mat-icon matListItemIcon class="text-gray-500">home</mat-icon>
         <span matListItemTitle>Home</span>
       </a>
-      <a mat-list-item routerLink="/accounts" routerLinkActive="active-link">
+      <a mat-list-item routerLink="/accounts" routerLinkActive="active-link" (click)="onNavClick(sidenav)">
         <mat-icon matListItemIcon class="text-gray-500">account_balance</mat-icon>
         <span matListItemTitle>Conti</span>
       </a>
       @if (selectedAccount(); as acc) {
-        <a mat-list-item [routerLink]="['/accounts', acc.id, 'transactions']" routerLinkActive="active-link">
+        <a mat-list-item [routerLink]="['/accounts', acc.id, 'transactions']" routerLinkActive="active-link" (click)="onNavClick(sidenav)">
           <mat-icon matListItemIcon class="text-gray-500">receipt_long</mat-icon>
           <span matListItemTitle>Movimenti</span>
         </a>

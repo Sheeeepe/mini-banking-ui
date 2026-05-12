@@ -17,7 +17,7 @@
       <!-- Card -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <!-- Header -->
-        <div class="p-6 pb-0 flex items-center justify-between">
+        <div class="p-4 sm:p-6 pb-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div class="flex items-center gap-3">
             <div class="w-12 h-12 rounded-full flex items-center justify-center"
                  [class.bg-green-50]="t.type === 'deposit'"
@@ -44,7 +44,7 @@
         </div>
 
         <!-- Amount -->
-        <div class="px-6 pt-6 pb-4">
+        <div class="px-4 sm:px-6 pt-4 sm:pt-6 pb-4">
           <p class="text-4xl font-bold" [class.text-green-600]="t.type === 'deposit'" [class.text-red-600]="t.type === 'withdrawal'">
             {{ t.type === 'deposit' ? '+' : '-' }}{{ t.amount | currency }}
           </p>
@@ -53,7 +53,7 @@
         <hr class="border-gray-100">
 
         <!-- Details -->
-        <div class="p-6 space-y-4">
+        <div class="p-4 sm:p-6 space-y-4">
           @if (editing()) {
             <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
               <mat-label>Descrizione</mat-label>
@@ -73,7 +73,7 @@
             </div>
           }
 
-          <div class="grid grid-cols-2 gap-4 pt-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div>
               <p class="text-xs text-gray-400 uppercase tracking-wider font-medium">Saldo dopo</p>
               <p class="text-gray-700 font-medium mt-1">{{ t.balance_after | currency }}</p>
@@ -92,7 +92,7 @@
         }
 
         <!-- Actions -->
-        <div class="px-6 pb-6 flex gap-2">
+        <div class="px-4 sm:px-6 pb-4 sm:pb-6 flex gap-2">
           @if (!editing()) {
             <button mat-stroked-button (click)="startEdit()">
               <mat-icon matIconPrefix>edit</mat-icon>

@@ -32,7 +32,7 @@
         <p class="text-4xl md:text-5xl font-bold mt-4 tracking-tight">
           {{ balance() | currency: currency() : 'symbol' : '1.2-2' }}
         </p>
-        <div class="flex gap-3 mt-6">
+        <div class="flex flex-col sm:flex-row gap-3 mt-6">
           <button mat-raised-button class="!bg-white !text-indigo-700 !font-semibold flex items-center gap-1 !rounded-lg" [routerLink]="['/accounts', accountId, 'deposit']">
             <mat-icon class="text-sm" style="font-size: 18px; width: 18px; height: 18px;">add</mat-icon>
             Deposita
@@ -47,12 +47,12 @@
       <!-- Conversion -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Conversioni di valuta</h2>
-        <div class="flex flex-wrap gap-3">
-          <button mat-stroked-button (click)="convertFiat()" [disabled]="converting()" class="!text-indigo-600 !border-indigo-300">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button mat-stroked-button (click)="convertFiat()" [disabled]="converting()" class="!text-indigo-600 !border-indigo-300 w-full sm:w-auto">
             <mat-icon matIconPrefix>currency_exchange</mat-icon>
             Converti in USD
           </button>
-          <button mat-stroked-button (click)="convertCrypto()" [disabled]="converting()" class="!text-indigo-600 !border-indigo-300">
+          <button mat-stroked-button (click)="convertCrypto()" [disabled]="converting()" class="!text-indigo-600 !border-indigo-300 w-full sm:w-auto">
             <mat-icon matIconPrefix>currency_bitcoin</mat-icon>
             Converti in BTC
           </button>
@@ -82,14 +82,14 @@
 
       <!-- Transazioni recenti -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div class="flex items-center justify-between p-6 pb-0">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 pb-0 gap-2">
           <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Ultimi movimenti</h2>
           <button mat-button [routerLink]="['/accounts', accountId, 'transactions']" class="!text-indigo-600">
             Vedi tutti
             <mat-icon matIconSuffix>arrow_forward</mat-icon>
           </button>
         </div>
-        <div class="p-6">
+        <div class="p-4 sm:p-6">
           @if (transactions().length === 0) {
             <div class="text-center py-8">
               <mat-icon class="text-gray-300 text-4xl mb-2" style="font-size: 40px; width: 40px; height: 40px;">receipt_long</mat-icon>
