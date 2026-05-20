@@ -21,6 +21,11 @@
           <span class="font-medium text-gray-700">{{ acc.currency }} {{ acc.balance }}</span>
         </div>
       }
+      @if (selectedAccount()) {
+        <button mat-icon-button class="text-gray-400" (click)="logout()" matTooltip="Logout">
+          <mat-icon>logout</mat-icon>
+        </button>
+      }
       <button mat-icon-button class="text-gray-400">
         <mat-icon>notifications_none</mat-icon>
       </button>
