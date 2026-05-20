@@ -38,7 +38,7 @@
       <!-- Lista transazioni -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="divide-y divide-gray-100">
-          @for (t of transactions(); track t.id) {
+          @for (t of paginatedTransactions(); track t.id) {
             <a [routerLink]="['/accounts', accountId, 'transactions', t.id]"
                class="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50 transition-colors cursor-pointer group">
               <div class="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
@@ -69,6 +69,19 @@
             </a>
           }
         </div>
+      </div>
+
+      <!-- Paginazione -->
+      <div class="flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3">
+        <button mat-stroked-button (click)="prevPage()" [disabled]="currentPage() <= 1" class="!min-w-0 !px-3">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span class="text-sm text-gray-500">
+          {{ (currentPage() - 1) * pageSize + 1 }}–{{ Math.min(currentPage() * pageSize, transactions().length) }} di {{ transactions().length }}
+        </span>
+        <button mat-stroked-button (click)="nextPage()" [disabled]="currentPage() >= totalPages()" class="!min-w-0 !px-3">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
       </div>
     }
   </div>

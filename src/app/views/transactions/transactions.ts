@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe, CurrencyPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,11 +19,23 @@ export class Transactions implements OnInit {
   private route = inject(ActivatedRoute);
   private transactionService = inject(TransactionService);
 
+  protected Math = Math;
+
   transactions = signal<TransactionModel[]>([]);
   currency = signal<string>('EUR');
   error = signal('');
   loading = signal(true);
   accountId = 0;
+
+  pageSize = 10;
+  currentPage = signal(1);
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.transactions().length / this.pageSize)));
+
+  paginatedTransactions = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.transactions().slice(start, start + this.pageSize);
+  });
 
   ngOnInit(): void {
     this.accountId = Number(this.route.snapshot.paramMap.get('id'));
@@ -39,5 +51,13 @@ export class Transactions implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  prevPage(): void {
+    this.currentPage.update(p => Math.max(1, p - 1));
+  }
+
+  nextPage(): void {
+    this.currentPage.update(p => Math.min(this.totalPages(), p + 1));
   }
 }
