@@ -43,6 +43,10 @@ export class TransactionService {
     return this.http.get<TransactionModel>(this.API.transaction(accountId, transactionId));
   }
 
+  clearCache(): void {
+    this._cache.set(new Map());
+  }
+
   invalidate(accountId: number): void {
     this._cache.update(m => {
       const next = new Map(m);

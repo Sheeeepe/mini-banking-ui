@@ -1,0 +1,72 @@
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+
+    <!-- Brand -->
+    <div class="text-center mb-8">
+      <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-lg">
+        <mat-icon class="text-white" style="font-size: 28px; width: 28px; height: 28px;">account_balance</mat-icon>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-800">Crea un account</h1>
+      <p class="text-gray-500 text-sm mt-1">Inizia a gestire le tue finanze.</p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-5">
+
+      <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+        <mat-label>Email</mat-label>
+        <mat-icon matPrefix class="mr-2 text-gray-400">email</mat-icon>
+        <input matInput type="email" [(ngModel)]="email" autocomplete="email" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+        <mat-label>Password</mat-label>
+        <mat-icon matPrefix class="mr-2 text-gray-400">lock</mat-icon>
+        <input matInput [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password"
+               autocomplete="new-password" />
+        <button matSuffix mat-icon-button type="button" (click)="showPassword = !showPassword" tabindex="-1">
+          <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        <mat-hint>Minimo 8 caratteri</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+        <mat-label>Conferma password</mat-label>
+        <mat-icon matPrefix class="mr-2 text-gray-400">lock_outline</mat-icon>
+        <input matInput [type]="showConfirm ? 'text' : 'password'" [(ngModel)]="confirmPassword"
+               (keyup.enter)="submit()" autocomplete="new-password" />
+        <button matSuffix mat-icon-button type="button" (click)="showConfirm = !showConfirm" tabindex="-1">
+          <mat-icon>{{ showConfirm ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </mat-form-field>
+
+      @if (error()) {
+        <div class="flex items-center gap-2 text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 text-sm">
+          <mat-icon style="font-size: 16px; width: 16px; height: 16px;">error_outline</mat-icon>
+          {{ error() }}
+        </div>
+      }
+
+      <button mat-raised-button color="primary" (click)="submit()"
+              [disabled]="loading() || !email || !password || !confirmPassword"
+              class="w-full !py-1.5">
+        @if (loading()) {
+          <div class="flex items-center justify-center gap-2">
+            <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            Creazione account...
+          </div>
+        } @else {
+          Registrati
+        }
+      </button>
+
+    </div>
+
+    <!-- Login link -->
+    <p class="text-center text-sm text-gray-500 mt-6">
+      Hai già un account?
+      <a routerLink="/login" class="text-indigo-600 font-semibold hover:underline">Accedi</a>
+    </p>
+
+  </div>
+</div>

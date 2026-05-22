@@ -1,11 +1,11 @@
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, inject, Output } from '@angular/core';
-import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SelectedAccountService } from '../../services/selected-account.service';
 import { AccountService } from '../../services/account-service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -16,9 +16,10 @@ import { AccountService } from '../../services/account-service';
 })
 export class Navbar {
   @Output() menuToggle = new EventEmitter<void>();
-  private router = inject(Router);
+
   private selectedAccountSvc = inject(SelectedAccountService);
   private accountService = inject(AccountService);
+  protected authService = inject(AuthService);
 
   protected selectedAccount = computed(() => {
     const id = this.selectedAccountSvc.selectedId();
@@ -26,7 +27,6 @@ export class Navbar {
   });
 
   logout(): void {
-    this.selectedAccountSvc.clear();
-    this.router.navigate(['/home']);
+    this.authService.logout();
   }
 }

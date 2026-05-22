@@ -1,6 +1,10 @@
-<app-navbar (menuToggle)="sidebar.toggle()"></app-navbar>
-<app-sidebar #sidebar [isMobile]="isMobile()" (navClick)="onNavClick()">
-  <div class="content">
-    <router-outlet />
-  </div>
-</app-sidebar>
+@if (isAuthPage()) {
+  <router-outlet />
+} @else {
+  <app-navbar (menuToggle)="toggleSidebar()"></app-navbar>
+  <app-sidebar #sidebar [isMobile]="isMobile()">
+    <div class="content">
+      <router-outlet />
+    </div>
+  </app-sidebar>
+}

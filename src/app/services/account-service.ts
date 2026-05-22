@@ -32,6 +32,10 @@ export class AccountService {
     return d ? { id: d.account_id, owner_name: d.owner_name, currency: d.currency, balance: d.balance } : null;
   }
 
+  clearCache(): void {
+    this._balanceCache.set(new Map());
+  }
+
   invalidateBalance(id: number): void {
     this._balanceCache.update(m => {
       const next = new Map(m);
