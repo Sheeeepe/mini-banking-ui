@@ -34,6 +34,10 @@ export class TransactionDetail implements OnInit {
   accountId = 0;
   transactionId = 0;
 
+  get currency(): string {
+    return this.accountService.getCached(this.accountId)?.currency ?? 'EUR';
+  }
+
   ngOnInit(): void {
     this.accountId = Number(this.route.snapshot.paramMap.get('id'));
     this.transactionId = Number(this.route.snapshot.paramMap.get('tid'));
