@@ -7,12 +7,12 @@ Permette di gestire conti bancari, visualizzare saldi e transazioni, effettuare 
 
 ## Stack
 
-| Tecnologia | Versione |
-|---|---|
-| Angular | 21 |
-| Angular Material | 21 |
-| Chart.js | 4 |
-| Tailwind CSS | 4 |
+| Tecnologia       | Versione |
+| ---------------- | -------- |
+| Angular          | 21       |
+| Angular Material | 21       |
+| Chart.js         | 4        |
+| Tailwind CSS     | 4        |
 
 ---
 
@@ -72,7 +72,7 @@ Apri `http://localhost:4200`.
 
 ### Variabili d'ambiente
 
-Crea `src/environments/environment.development.ts` se non presente:
+Crea `src/environments/environment.development.ts` se non presente(in questo caso, è già presente il server demo online)
 
 ```typescript
 export const environment = {
@@ -91,13 +91,13 @@ La demo pubblica è deployata su Railway.
 
 ## Routes
 
-| Path | Componente |
-|---|---|
-| `/` | redirect → `/home` |
-| `/home` | Home |
-| `/accounts` | Accounts |
-| `/accounts/:id` | AccountDashboard |
-| `/accounts/:id/deposit` | TransactionForm |
-| `/accounts/:id/withdraw` | TransactionForm |
-| `/accounts/:id/transactions` | Transactions |
-| `/accounts/:id/transactions/:tid` | TransactionDetail |
+| Path                              | Componente         |
+| --------------------------------- | ------------------ |
+| `/`                               | redirect → `/home` |
+| `/home`                           | Home               |
+| `/accounts`                       | Accounts           |
+| `/accounts/:id`                   | AccountDashboard   |
+| `/accounts/:id/deposit`           | TransactionForm    |
+| `/accounts/:id/withdraw`          | TransactionForm    |
+| `/accounts/:id/transactions`      | Transactions       |
+| `/accounts/:id/transactions/:tid` | TransactionDetail  |
