@@ -40,7 +40,11 @@
         </mat-form-field>
         <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
           <mat-label>Valuta</mat-label>
-          <input matInput [(ngModel)]="currency" placeholder="EUR" />
+          <mat-select [(ngModel)]="currency" [disabled]="currenciesLoading()">
+            @for (c of fiatCurrencies(); track c) {
+              <mat-option [value]="c">{{ c }}</mat-option>
+            }
+          </mat-select>
         </mat-form-field>
       </div>
       @if (error()) {
