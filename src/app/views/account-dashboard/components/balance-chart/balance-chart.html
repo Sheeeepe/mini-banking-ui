@@ -1,0 +1,14 @@
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Andamento saldo</h2>
+    <mat-button-toggle-group [value]="timeRange()" (change)="setTimeRange($event.value)" class="!border-gray-200">
+      <mat-button-toggle value="7d"  class="!text-xs !h-8">7g</mat-button-toggle>
+      <mat-button-toggle value="30d" class="!text-xs !h-8">30g</mat-button-toggle>
+      <mat-button-toggle value="90d" class="!text-xs !h-8">90g</mat-button-toggle>
+      <mat-button-toggle value="all" class="!text-xs !h-8">Tutto</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+  <div class="relative h-64 sm:h-80">
+    <canvas #balanceChart></canvas>
+  </div>
+</div>

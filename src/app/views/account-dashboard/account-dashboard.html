@@ -1,8 +1,7 @@
-
 @if (error()) {
   <div class="min-h-[80vh] flex items-center justify-center bg-gray-50">
     <div class="text-center bg-white rounded-xl shadow-sm border border-gray-200 p-8 max-w-sm">
-      <mat-icon class="text-red-400 text-5xl mb-4" style="font-size: 48px; width: 48px; height: 48px;">error_outline</mat-icon>
+      <mat-icon class="text-red-400 mb-4" style="font-size: 48px; width: 48px; height: 48px;">error_outline</mat-icon>
       <p class="text-gray-600 mb-4">{{ error() }}</p>
       <button mat-raised-button color="primary" routerLink="/accounts">Torna agli account</button>
     </div>
@@ -18,136 +17,27 @@
   <div class="min-h-[80vh] bg-gray-50 p-4 md:p-6">
     <div class="max-w-5xl mx-auto space-y-6">
 
-      <!-- Balance card -->
-      <div class="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl shadow-lg p-6 md:p-8 text-white">
-        <div class="flex items-center justify-between mb-2">
-          <div>
-            <p class="text-indigo-200 text-sm font-medium">{{ ownerName() }}</p>
-            <p class="text-indigo-300 text-xs">Account #{{ accountId }}</p>
-          </div>
-          <div class="bg-white/10 rounded-lg px-3 py-1">
-            <span class="text-sm font-medium">{{ currency() }}</span>
-          </div>
-        </div>
-        <p class="text-4xl md:text-5xl font-bold mt-4 tracking-tight">
-          {{ balance() | currency: currency() : 'symbol' : '1.2-2' }}
-        </p>
-        <div class="flex flex-col sm:flex-row gap-3 mt-6">
-          <button mat-raised-button class="!bg-white !text-indigo-700 !font-semibold flex items-center gap-1 !rounded-lg" [routerLink]="['/accounts', accountId, 'deposit']">
-            <mat-icon class="text-sm" style="font-size: 18px; width: 18px; height: 18px;">add</mat-icon>
-            Deposita
-          </button>
-          <button mat-raised-button class="!bg-white/20 !text-white !font-semibold flex items-center gap-1 !rounded-lg" [routerLink]="['/accounts', accountId, 'withdraw']">
-            <mat-icon class="text-sm" style="font-size: 18px; width: 18px; height: 18px;">remove</mat-icon>
-            Preleva
-          </button>
-        </div>
-      </div>
+      <app-balance-card
+        [accountId]="accountId"
+        [ownerName]="ownerName()"
+        [balance]="balance()"
+        [currency]="currency()" />
 
-      <!-- Andamento saldo -->
       @if (transactions().length > 0) {
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Andamento saldo</h2>
-          <mat-button-toggle-group [value]="timeRange()" (change)="setTimeRange($event.value)" class="!border-gray-200">
-            <mat-button-toggle value="7d" class="!text-xs !h-8">7g</mat-button-toggle>
-            <mat-button-toggle value="30d" class="!text-xs !h-8">30g</mat-button-toggle>
-            <mat-button-toggle value="90d" class="!text-xs !h-8">90g</mat-button-toggle>
-            <mat-button-toggle value="all" class="!text-xs !h-8">Tutto</mat-button-toggle>
-          </mat-button-toggle-group>
-        </div>
-        <div class="relative h-64 sm:h-80">
-          <canvas #balanceChart></canvas>
-        </div>
-      </div>
+        <app-balance-chart
+          [transactions]="transactions()"
+          [currency]="currency()" />
       }
 
-      <!-- Conversion -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Conversioni di valuta</h2>
-        <div class="flex flex-col sm:flex-row gap-3">
-          <button mat-stroked-button (click)="convertFiat()" [disabled]="converting()" class="!text-indigo-600 !border-indigo-300 w-full sm:w-auto">
-            <mat-icon matIconPrefix>currency_exchange</mat-icon>
-            Converti in USD
-          </button>
-          <button mat-stroked-button (click)="convertCrypto()" [disabled]="converting()" class="!text-indigo-600 !border-indigo-300 w-full sm:w-auto">
-            <mat-icon matIconPrefix>currency_bitcoin</mat-icon>
-            Converti in BTC
-          </button>
-        </div>
+      <app-conversion-card
+        [accountId]="accountId"
+        [balance]="balance()"
+        [currency]="currency()" />
 
-        @if (converting()) {
-          <div class="mt-4 flex items-center gap-2 text-gray-500 text-sm">
-            <div class="w-4 h-4 border-2 border-gray-300 border-t-indigo-600 rounded-full animate-spin"></div>
-            Conversione in corso...
-          </div>
-        }
-        @if (conversionResult(); as r) {
-          <div class="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
-            <p class="text-sm text-gray-500">
-              {{ balance() | currency: currency() }} →
-              <span class="font-bold text-indigo-700">{{ r.amount | number:'1.2-8' }} {{ r.to }}</span>
-            </p>
-            @if (r.rate) {
-              <p class="text-xs text-gray-400 mt-1">Tasso: 1 {{ currency() }} = {{ r.rate }} {{ r.to }}</p>
-            }
-          </div>
-        }
-        @if (conversionError()) {
-          <p class="mt-4 text-sm text-red-500">{{ conversionError() }}</p>
-        }
-      </div>
-
-      <!-- Transazioni recenti -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 pb-0 gap-2">
-          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Ultimi movimenti</h2>
-          <button mat-button [routerLink]="['/accounts', accountId, 'transactions']" class="!text-indigo-600">
-            Vedi tutti
-            <mat-icon matIconSuffix>arrow_forward</mat-icon>
-          </button>
-        </div>
-        <div class="p-4 sm:p-6">
-          @if (transactions().length === 0) {
-            <div class="text-center py-8">
-              <mat-icon class="text-gray-300 text-4xl mb-2" style="font-size: 40px; width: 40px; height: 40px;">receipt_long</mat-icon>
-              <p class="text-gray-400">Nessuna transazione</p>
-            </div>
-          } @else {
-            <div class="space-y-2">
-              @for (t of transactions().slice(0, 10); track t.id) {
-                <a [routerLink]="['/accounts', accountId, 'transactions', t.id]"
-                   class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group">
-                  <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full flex items-center justify-center"
-                         [class.bg-green-50]="t.type === 'deposit'"
-                         [class.bg-red-50]="t.type === 'withdrawal'">
-                      <mat-icon class="text-sm"
-                                [class.text-green-600]="t.type === 'deposit'"
-                                [class.text-red-600]="t.type === 'withdrawal'"
-                                style="font-size: 18px; width: 18px; height: 18px;">
-                        {{ t.type === 'deposit' ? 'arrow_downward' : 'arrow_upward' }}
-                      </mat-icon>
-                    </div>
-                    <div>
-                      <p class="text-sm font-medium text-gray-700">{{ t.description || (t.type === 'deposit' ? 'Deposito' : 'Prelievo') }}</p>
-                      <p class="text-xs text-gray-400">{{ t.created_at | date:'dd MMM, HH:mm' }}</p>
-                    </div>
-                  </div>
-                  <div class="text-right">
-                    <p class="text-sm font-semibold"
-                       [class.text-green-600]="t.type === 'deposit'"
-                       [class.text-red-600]="t.type === 'withdrawal'">
-                      {{ t.type === 'deposit' ? '+' : '-' }}{{ t.amount | currency: currency() }}
-                    </p>
-                    <p class="text-xs text-gray-400 group-hover:text-indigo-500 transition-colors">Dettaglio &rarr;</p>
-                  </div>
-                </a>
-              }
-            </div>
-          }
-        </div>
-      </div>
+      <app-recent-transactions
+        [accountId]="accountId"
+        [transactions]="transactions()"
+        [currency]="currency()" />
 
     </div>
   </div>

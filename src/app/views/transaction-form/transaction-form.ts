@@ -8,19 +8,24 @@ import { MatIconModule } from '@angular/material/icon';
 import { TransactionService } from '../../services/transaction-service';
 import { AccountService } from '../../services/account-service';
 
+type OperationType = 'deposit' | 'withdraw';
+
 @Component({
-  selector: 'app-deposit',
+  selector: 'app-transaction-form',
   imports: [FormsModule, MatButtonModule, MatInputModule, MatFormFieldModule, MatIconModule],
-  templateUrl: './deposit.html',
-  styleUrl: './deposit.css',
+  templateUrl: './transaction-form.html',
 })
-export class Deposit {
+export class TransactionForm {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private transactionService = inject(TransactionService);
   private accountService = inject(AccountService);
 
-  accountId = Number(this.route.snapshot.paramMap.get('id'));
+  readonly type: OperationType = this.route.snapshot.data['type'];
+  readonly accountId = Number(this.route.snapshot.paramMap.get('id'));
+
+  get isDeposit() { return this.type === 'deposit'; }
+
   amount: number | null = null;
   description = '';
   loading = signal(false);
@@ -30,16 +35,21 @@ export class Deposit {
     if (!this.amount || this.amount <= 0) return;
     this.loading.set(true);
     this.error.set('');
-    this.transactionService.deposit(this.accountId, this.amount, this.description || undefined).subscribe({
+
+    const operation = this.isDeposit
+      ? this.transactionService.deposit(this.accountId, this.amount, this.description || undefined)
+      : this.transactionService.withdraw(this.accountId, this.amount, this.description || undefined);
+
+    operation.subscribe({
       next: () => {
         this.transactionService.invalidate(this.accountId);
         this.accountService.invalidateBalance(this.accountId);
         this.loading.set(false);
         this.router.navigate(['/accounts', this.accountId]);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
-        this.error.set('Errore durante il deposito. Riprova.');
+        this.error.set(err.error?.error || `Errore durante il ${this.isDeposit ? 'deposito' : 'prelievo'}`);
       },
     });
   }
