@@ -1,6 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { Navbar } from './shared/navbar/navbar';
 import { Sidebar } from './shared/sidebar/sidebar';
 
@@ -13,14 +15,12 @@ import { Sidebar } from './shared/sidebar/sidebar';
 export class App {
   private breakpointObserver = inject(BreakpointObserver);
 
-  isMobile = signal(false);
+  isMobile = toSignal(
+    this.breakpointObserver.observe([Breakpoints.Handset]).pipe(
+      map(result => result.matches)
+    ),
+    { initialValue: false }
+  );
 
-  constructor() {
-    this.breakpointObserver.observe([Breakpoints.Handset]).subscribe((result) => {
-      this.isMobile.set(result.matches);
-    });
-  }
-
-  onNavClick(): void {
-  }
+  onNavClick(): void {}
 }

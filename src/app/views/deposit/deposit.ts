@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { TransactionService } from '../../services/transaction-service';
+import { AccountService } from '../../services/account-service';
 
 @Component({
   selector: 'app-deposit',
@@ -17,6 +18,7 @@ export class Deposit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private transactionService = inject(TransactionService);
+  private accountService = inject(AccountService);
 
   accountId = Number(this.route.snapshot.paramMap.get('id'));
   amount: number | null = null;
@@ -30,6 +32,8 @@ export class Deposit {
     this.error.set('');
     this.transactionService.deposit(this.accountId, this.amount, this.description || undefined).subscribe({
       next: () => {
+        this.transactionService.invalidate(this.accountId);
+        this.accountService.invalidateBalance(this.accountId);
         this.loading.set(false);
         this.router.navigate(['/accounts', this.accountId]);
       },

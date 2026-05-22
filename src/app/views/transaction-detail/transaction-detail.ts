@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { TransactionService } from '../../services/transaction-service';
+import { AccountService } from '../../services/account-service';
 import { TransactionModel } from '../../models/transaction-model';
 
 @Component({
@@ -21,6 +22,7 @@ import { TransactionModel } from '../../models/transaction-model';
 export class TransactionDetail implements OnInit {
   private route = inject(ActivatedRoute);
   private transactionService = inject(TransactionService);
+  private accountService = inject(AccountService);
   private router = inject(Router);
 
   transaction = signal<TransactionModel | null>(null);
@@ -60,6 +62,7 @@ export class TransactionDetail implements OnInit {
   saveEdit(): void {
     this.transactionService.updateDescription(this.accountId, this.transactionId, this.editDescription).subscribe({
       next: () => {
+        this.transactionService.invalidate(this.accountId);
         this.editing.set(false);
         this.load();
       },
@@ -76,7 +79,11 @@ export class TransactionDetail implements OnInit {
     if (!confirm('Eliminare questa transazione definitivamente?')) return;
     this.deleting.set(true);
     this.transactionService.delete(this.accountId, this.transactionId).subscribe({
-      next: () => this.router.navigate(['/accounts', this.accountId, 'transactions']),
+      next: () => {
+        this.transactionService.invalidate(this.accountId);
+        this.accountService.invalidateBalance(this.accountId);
+        this.router.navigate(['/accounts', this.accountId, 'transactions']);
+      },
       error: () => {
         this.deleting.set(false);
         this.error.set('Errore durante l\'eliminazione');

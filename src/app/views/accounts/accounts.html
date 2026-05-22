@@ -43,8 +43,8 @@
           <input matInput [(ngModel)]="currency" placeholder="EUR" />
         </mat-form-field>
       </div>
-      @if (error) {
-        <p class="text-red-500 text-sm mt-2">{{ error }}</p>
+      @if (error()) {
+        <p class="text-red-500 text-sm mt-2">{{ error() }}</p>
       }
       <button mat-raised-button color="primary" (click)="createAccount()" [disabled]="creating() || !ownerName || !currency" class="w-full !mt-4">
         <mat-icon matIconPrefix>add_circle</mat-icon>

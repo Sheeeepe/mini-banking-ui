@@ -1,23 +1,43 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
+import { of, tap } from 'rxjs';
 import { environment } from '../../environments/environment.development';
+
+type BalanceData = { account_id: number; owner_name: string; currency: string; balance: number };
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
   private http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
+  private readonly _balanceCache = signal<Map<number, BalanceData>>(new Map());
+
   private readonly API = {
-    account: (id: number) => `${this.apiUrl}/accounts/${id}`,
     balance: (id: number) => `${this.apiUrl}/accounts/${id}/balance`,
     convertFiat: (id: number, to: string) => `${this.apiUrl}/accounts/${id}/balance/convert/fiat?to=${to}`,
     convertCrypto: (id: number, to: string) => `${this.apiUrl}/accounts/${id}/balance/convert/crypto?to=${to}`,
   };
 
   getBalance(id: number) {
-    return this.http.get<{ account_id: number; owner_name: string; currency: string; balance: number }>(
-      this.API.balance(id)
+    const cached = this._balanceCache().get(id);
+    if (cached) return of(cached);
+
+    return this.http.get<BalanceData>(this.API.balance(id)).pipe(
+      tap(res => this._balanceCache.update(m => new Map(m).set(id, res)))
     );
+  }
+
+  getCached(id: number) {
+    const d = this._balanceCache().get(id);
+    return d ? { id: d.account_id, owner_name: d.owner_name, currency: d.currency, balance: d.balance } : null;
+  }
+
+  invalidateBalance(id: number): void {
+    this._balanceCache.update(m => {
+      const next = new Map(m);
+      next.delete(id);
+      return next;
+    });
   }
 
   convertFiat(id: number, to: string) {

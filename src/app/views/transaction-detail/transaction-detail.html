@@ -37,8 +37,10 @@
             </div>
           </div>
           <span class="text-xs px-2 py-1 rounded-full font-medium"
-                [class.bg-green-50.text-green-700]="t.type === 'deposit'"
-                [class.bg-red-50.text-red-700]="t.type === 'withdrawal'">
+                [class.bg-green-50]="t.type === 'deposit'"
+                [class.text-green-700]="t.type === 'deposit'"
+                [class.bg-red-50]="t.type === 'withdrawal'"
+                [class.text-red-700]="t.type === 'withdrawal'">
             #{{ t.id }}
           </span>
         </div>

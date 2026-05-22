@@ -1,10 +1,10 @@
-import { Component, inject, OnInit, signal, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, inject, OnInit, signal, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DatePipe, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { forkJoin } from 'rxjs';
 import Chart from 'chart.js/auto';
 import { AccountService } from '../../services/account-service';
 import { TransactionService } from '../../services/transaction-service';
@@ -16,13 +16,13 @@ type TimeRange = '7d' | '30d' | '90d' | 'all';
 @Component({
   selector: 'app-account-dashboard',
   imports: [
-    MatButtonModule, MatIconModule, MatTabsModule, MatButtonToggleModule,
+    MatButtonModule, MatIconModule, MatButtonToggleModule,
     RouterLink, DatePipe, CurrencyPipe, DecimalPipe,
   ],
   templateUrl: './account-dashboard.html',
   styleUrl: './account-dashboard.css',
 })
-export class AccountDashboard implements OnInit, AfterViewInit {
+export class AccountDashboard implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private accountService = inject(AccountService);
@@ -37,12 +37,10 @@ export class AccountDashboard implements OnInit, AfterViewInit {
   error = signal('');
   loading = signal(true);
 
-  // Conversion
   converting = signal(false);
   conversionResult = signal<{ type: string; to: string; amount: number; rate?: number } | null>(null);
   conversionError = signal('');
 
-  // Chart
   timeRange = signal<TimeRange>('all');
   private chart: Chart | null = null;
 
@@ -57,38 +55,24 @@ export class AccountDashboard implements OnInit, AfterViewInit {
     this.loadDashboard();
   }
 
-  ngAfterViewInit(): void {
-    if (this.transactions().length > 0) {
-      this.initChart();
-    }
-  }
-
   private loadDashboard(): void {
     this.loading.set(true);
-    this.accountService.getBalance(this.accountId).subscribe({
-      next: (res) => {
-        this.balance.set(res.balance);
-        this.currency.set(res.currency);
-        this.ownerName.set(res.owner_name);
-        this.selectedAccountSvc.select({
-          id: this.accountId,
-          owner_name: res.owner_name,
-          currency: res.currency,
-          balance: res.balance,
-          created_at: new Date(),
-        });
+    forkJoin({
+      balance: this.accountService.getBalance(this.accountId),
+      txs: this.transactionService.getAll(this.accountId),
+    }).subscribe({
+      next: ({ balance, txs }) => {
+        this.balance.set(balance.balance);
+        this.currency.set(balance.currency);
+        this.ownerName.set(balance.owner_name);
+        this.selectedAccountSvc.select(this.accountId);
+        this.transactions.set(txs.transactions);
         this.loading.set(false);
+        setTimeout(() => this.initChart());
       },
       error: () => {
         this.error.set('Account non trovato');
         this.loading.set(false);
-      },
-    });
-
-    this.transactionService.getAll(this.accountId).subscribe({
-      next: (res) => {
-        this.transactions.set(res.transactions);
-        setTimeout(() => this.initChart());
       },
     });
   }
@@ -96,6 +80,8 @@ export class AccountDashboard implements OnInit, AfterViewInit {
   // ── Chart ──
 
   private chartTransactions: TransactionModel[] = [];
+  private chartLabels: string[] = [];
+  private chartValues: number[] = [];
 
   private initChart(): void {
     if (this.chart) {
@@ -169,9 +155,6 @@ export class AccountDashboard implements OnInit, AfterViewInit {
     });
   }
 
-  private chartLabels: string[] = [];
-  private chartValues: number[] = [];
-
   private buildChartData(): void {
     const all = this.transactions();
     const range = this.timeRange();
@@ -197,7 +180,14 @@ export class AccountDashboard implements OnInit, AfterViewInit {
 
   setTimeRange(range: TimeRange): void {
     this.timeRange.set(range);
-    this.initChart();
+    this.buildChartData();
+    if (!this.chart) {
+      this.initChart();
+      return;
+    }
+    this.chart.data.labels = this.chartLabels;
+    this.chart.data.datasets[0].data = this.chartValues;
+    this.chart.update();
   }
 
   // ── Conversion ──

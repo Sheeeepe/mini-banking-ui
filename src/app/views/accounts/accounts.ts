@@ -20,7 +20,7 @@ export class Accounts {
   accountId = 1;
   ownerName = '';
   currency = 'EUR';
-  error = '';
+  error = signal('');
   creating = signal(false);
 
   goToAccount(): void {
@@ -32,7 +32,7 @@ export class Accounts {
   createAccount(): void {
     if (!this.ownerName || !this.currency) return;
     this.creating.set(true);
-    this.error = '';
+    this.error.set('');
     this.accountService.create(this.ownerName, this.currency.toUpperCase()).subscribe({
       next: (res) => {
         this.creating.set(false);
@@ -40,7 +40,7 @@ export class Accounts {
       },
       error: () => {
         this.creating.set(false);
-        this.error = 'Errore durante la creazione';
+        this.error.set('Errore durante la creazione');
       },
     });
   }
