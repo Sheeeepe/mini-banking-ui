@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
   selector: 'app-balance-card',
   imports: [RouterLink, CurrencyPipe, MatButtonModule, MatIconModule],
   templateUrl: './balance-card.html',
+  host: { class: 'block' },
 })
 export class BalanceCard {
   @Input({ required: true }) accountId!: number;

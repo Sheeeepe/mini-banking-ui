@@ -16,6 +16,7 @@ import { CurrencyService } from '../../../../services/currency.service';
     CurrencyPipe, DecimalPipe,
   ],
   templateUrl: './conversion-card.html',
+  host: { class: 'block' },
 })
 export class ConversionCard implements OnInit {
   @Input({ required: true }) accountId!: number;

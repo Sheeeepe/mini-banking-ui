@@ -9,6 +9,7 @@ import { TransactionModel } from '../../../../models/transaction-model';
   selector: 'app-recent-transactions',
   imports: [RouterLink, DatePipe, CurrencyPipe, MatButtonModule, MatIconModule],
   templateUrl: './recent-transactions.html',
+  host: { class: 'block' },
 })
 export class RecentTransactions {
   @Input({ required: true }) accountId!: number;

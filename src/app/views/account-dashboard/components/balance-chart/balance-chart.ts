@@ -9,6 +9,7 @@ type TimeRange = '7d' | '30d' | '90d' | 'all';
   selector: 'app-balance-chart',
   imports: [MatButtonToggleModule],
   templateUrl: './balance-chart.html',
+  host: { class: 'block' },
 })
 export class BalanceChart implements AfterViewInit, OnDestroy {
   @Input({ required: true }) transactions!: TransactionModel[];
