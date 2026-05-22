@@ -1,0 +1,44 @@
+@if (error()) {
+  <div class="min-h-[80vh] flex items-center justify-center bg-gray-50">
+    <div class="text-center bg-white rounded-xl shadow-sm border border-gray-200 p-8 max-w-sm">
+      <mat-icon class="text-red-400 mb-4" style="font-size: 48px; width: 48px; height: 48px;">error_outline</mat-icon>
+      <p class="text-gray-600 mb-4">{{ error() }}</p>
+      <button mat-raised-button color="primary" routerLink="/accounts">Torna agli account</button>
+    </div>
+  </div>
+} @else if (loading()) {
+  <div class="min-h-[80vh] flex items-center justify-center bg-gray-50">
+    <div class="flex flex-col items-center gap-3">
+      <div class="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+      <p class="text-gray-500 text-sm">Caricamento...</p>
+    </div>
+  </div>
+} @else {
+  <div class="min-h-[80vh] bg-gray-50 p-4 md:p-6">
+    <div class="max-w-5xl mx-auto space-y-6">
+
+      <app-balance-card
+        [accountId]="accountId"
+        [ownerName]="ownerName()"
+        [balance]="balance()"
+        [currency]="currency()" />
+
+      @if (transactions().length > 0) {
+        <app-balance-chart
+          [transactions]="transactions()"
+          [currency]="currency()" />
+      }
+
+      <app-conversion-card
+        [accountId]="accountId"
+        [balance]="balance()"
+        [currency]="currency()" />
+
+      <app-recent-transactions
+        [accountId]="accountId"
+        [transactions]="transactions()"
+        [currency]="currency()" />
+
+    </div>
+  </div>
+}

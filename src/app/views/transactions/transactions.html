@@ -1,0 +1,88 @@
+
+<div class="min-h-[80vh] bg-gray-50 p-4 md:p-6">
+  <div class="max-w-5xl mx-auto space-y-4">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">Movimenti</h1>
+        <p class="text-sm text-gray-500">Account #{{ accountId }}</p>
+      </div>
+      <button mat-stroked-button [routerLink]="['/accounts', accountId]" class="!text-sm">
+        <mat-icon matIconPrefix>arrow_back</mat-icon>
+        Dashboard
+      </button>
+    </div>
+
+    @if (loading()) {
+      <div class="flex justify-center py-16">
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+          <p class="text-gray-500 text-sm">Caricamento...</p>
+        </div>
+      </div>
+    } @else if (error()) {
+      <div class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
+        <mat-icon class="text-red-400 text-4xl mb-3" style="font-size: 40px; width: 40px; height: 40px;">error_outline</mat-icon>
+        <p class="text-gray-600">{{ error() }}</p>
+      </div>
+    } @else if (transactions().length === 0) {
+      <div class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
+        <mat-icon class="text-gray-300 text-5xl mb-3" style="font-size: 48px; width: 48px; height: 48px;">receipt_long</mat-icon>
+        <p class="text-gray-400 text-lg font-medium">Nessun movimento</p>
+        <p class="text-gray-400 text-sm mt-1">Effettua un deposito o prelievo per vedere le transazioni</p>
+        <button mat-raised-button color="primary" [routerLink]="['/accounts', accountId]" class="mt-4">
+          Torna al dashboard
+        </button>
+      </div>
+    } @else {
+      <!-- Lista transazioni -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="divide-y divide-gray-100">
+          @for (t of paginatedTransactions(); track t.id) {
+            <a [routerLink]="['/accounts', accountId, 'transactions', t.id]"
+               class="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50 transition-colors cursor-pointer group">
+              <div class="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                     [class.bg-green-50]="t.type === 'deposit'"
+                     [class.bg-red-50]="t.type === 'withdrawal'">
+                  <mat-icon [class.text-green-600]="t.type === 'deposit'"
+                            [class.text-red-600]="t.type === 'withdrawal'">
+                    {{ t.type === 'deposit' ? 'arrow_downward' : 'arrow_upward' }}
+                  </mat-icon>
+                </div>
+                <div>
+                  <p class="font-medium text-gray-800">{{ t.description || (t.type === 'deposit' ? 'Deposito' : 'Prelievo') }}</p>
+                  <p class="text-xs text-gray-400">{{ t.created_at | date:'dd MMM yyyy, HH:mm' }}</p>
+                </div>
+              </div>
+              <div class="text-right flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                <div>
+                  <p class="font-bold text-sm whitespace-nowrap"
+                     [class.text-green-600]="t.type === 'deposit'"
+                     [class.text-red-600]="t.type === 'withdrawal'">
+                    {{ t.type === 'deposit' ? '+' : '-' }}{{ t.amount | currency: currency() }}
+                  </p>
+                  <p class="text-xs text-gray-400 hidden sm:block">Saldo: {{ t.balance_after | currency: currency() }}</p>
+                </div>
+                <mat-icon class="text-gray-300 group-hover:text-indigo-400 transition-colors">chevron_right</mat-icon>
+              </div>
+            </a>
+          }
+        </div>
+      </div>
+
+      <!-- Paginazione -->
+      <div class="flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3">
+        <button mat-stroked-button (click)="prevPage()" [disabled]="currentPage() <= 1" class="!min-w-0 !px-3">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span class="text-sm text-gray-500">
+          {{ (currentPage() - 1) * pageSize + 1 }}–{{ Math.min(currentPage() * pageSize, transactions().length) }} di {{ transactions().length }}
+        </span>
+        <button mat-stroked-button (click)="nextPage()" [disabled]="currentPage() >= totalPages()" class="!min-w-0 !px-3">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    }
+  </div>
+</div>

@@ -1,12 +1,32 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, inject, Output } from '@angular/core';
+import { Router } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { SelectedAccountService } from '../../services/selected-account.service';
+import { AccountService } from '../../services/account-service';
 
 @Component({
   selector: 'app-navbar',
-  imports: [],
+  imports: [MatIconModule, MatButtonModule, MatMenuModule, MatTooltipModule],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class Navbar {
+  @Output() menuToggle = new EventEmitter<void>();
+  private router = inject(Router);
+  private selectedAccountSvc = inject(SelectedAccountService);
+  private accountService = inject(AccountService);
 
+  protected selectedAccount = computed(() => {
+    const id = this.selectedAccountSvc.selectedId();
+    return id !== null ? this.accountService.getCached(id) : null;
+  });
+
+  logout(): void {
+    this.selectedAccountSvc.clear();
+    this.router.navigate(['/home']);
+  }
 }

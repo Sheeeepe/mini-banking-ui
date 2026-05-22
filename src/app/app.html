@@ -1,6 +1,6 @@
-<app-navbar></app-navbar>
-<button mat-button>Click me</button>
-<button mat-raised-button color="primary">Primary</button>
-<button mat-flat-button color="accent">Accent</button>
-<button mat-stroked-button>Stroked</button>
-<router-outlet />
+<app-navbar (menuToggle)="sidebar.toggle()"></app-navbar>
+<app-sidebar #sidebar [isMobile]="isMobile()" (navClick)="onNavClick()">
+  <div class="content">
+    <router-outlet />
+  </div>
+</app-sidebar>
