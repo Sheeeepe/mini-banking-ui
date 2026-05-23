@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, Input, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, Input, signal } from '@angular/core';
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,7 +18,7 @@ import { CurrencyService } from '../../../../services/currency.service';
   templateUrl: './conversion-card.html',
   host: { class: 'block' },
 })
-export class ConversionCard implements OnInit {
+export class ConversionCard {
   @Input({ required: true }) accountId!: number;
   @Input({ required: true }) balance!: number;
   @Input({ required: true }) currency!: string;
@@ -29,14 +29,12 @@ export class ConversionCard implements OnInit {
   converting = signal(false);
   conversionResult = signal<{ type: string; to: string; amount: number; rate?: number } | null>(null);
   conversionError = signal('');
-  fiatLoading = signal(false);
-  cryptoLoading = signal(false);
 
   selectedFiatCurrency = signal('USD');
   selectedCryptoCurrency = signal('BTC');
 
   fiatCurrencies = computed(() =>
-    this.currencyService.fiatCurrencies().filter(c => c !== this.currency)
+    this.currencyService.fiatCurrencies.filter(c => c !== this.currency)
   );
 
   readonly cryptoSymbols = this.currencyService.cryptoSymbols;
@@ -47,20 +45,6 @@ export class ConversionCard implements OnInit {
       if (available.length > 0 && !available.includes(this.selectedFiatCurrency())) {
         this.selectedFiatCurrency.set(available[0]);
       }
-    });
-  }
-
-  ngOnInit(): void {
-    this.fiatLoading.set(true);
-    this.currencyService.loadFiatCurrencies().subscribe({
-      complete: () => this.fiatLoading.set(false),
-      error: () => this.fiatLoading.set(false),
-    });
-
-    this.cryptoLoading.set(true);
-    this.currencyService.loadCryptoSymbols().subscribe({
-      complete: () => this.cryptoLoading.set(false),
-      error: () => this.cryptoLoading.set(false),
     });
   }
 

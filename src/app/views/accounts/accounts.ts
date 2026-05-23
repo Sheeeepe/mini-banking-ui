@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
@@ -11,13 +11,19 @@ import { CurrencyService } from '../../services/currency.service';
 
 @Component({
   selector: 'app-accounts',
-  imports: [FormsModule, MatButtonModule, MatInputModule, MatFormFieldModule, MatIconModule, MatSelectModule],
+  imports: [
+    FormsModule,
+    MatButtonModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatSelectModule,
+  ],
   templateUrl: './accounts.html',
   styleUrl: './accounts.css',
 })
-export class Accounts implements OnInit {
+export class Accounts {
   private accountService = inject(AccountService);
-  private currencyService = inject(CurrencyService);
   private router = inject(Router);
 
   accountId = 1;
@@ -25,16 +31,8 @@ export class Accounts implements OnInit {
   currency = 'EUR';
   error = signal('');
   creating = signal(false);
-  currenciesLoading = signal(true);
 
-  fiatCurrencies = this.currencyService.fiatCurrencies;
-
-  ngOnInit(): void {
-    this.currencyService.loadFiatCurrencies().subscribe({
-      complete: () => this.currenciesLoading.set(false),
-      error: () => this.currenciesLoading.set(false),
-    });
-  }
+  readonly fiatCurrencies = inject(CurrencyService).fiatCurrencies;
 
   goToAccount(): void {
     if (this.accountId > 0) {

@@ -40,8 +40,8 @@
         </mat-form-field>
         <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
           <mat-label>Valuta</mat-label>
-          <mat-select [(ngModel)]="currency" [disabled]="currenciesLoading()">
-            @for (c of fiatCurrencies(); track c) {
+          <mat-select [(ngModel)]="currency">
+            @for (c of fiatCurrencies; track c) {
               <mat-option [value]="c">{{ c }}</mat-option>
             }
           </mat-select>
