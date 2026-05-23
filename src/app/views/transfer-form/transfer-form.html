@@ -1,0 +1,75 @@
+<div class="min-h-[80vh] flex items-center justify-center p-6 bg-gray-50">
+  <div class="w-full max-w-lg">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-violet-500 to-violet-600 p-6 text-white">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+            <mat-icon>swap_horiz</mat-icon>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold">Trasferimento</h1>
+            <p class="text-sm opacity-80">Account #{{ accountId }} · {{ currency() }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="p-6 space-y-4">
+
+        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+          <mat-label>Account destinatario</mat-label>
+          <mat-icon matIconPrefix class="!text-gray-400">account_circle</mat-icon>
+          <input matInput type="number" [(ngModel)]="targetAccountId" min="1" placeholder="ID account" />
+          @if (targetAccountId && targetAccountId === accountId) {
+            <mat-hint class="!text-red-500">Non puoi trasferire allo stesso account</mat-hint>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+          <mat-label>Importo</mat-label>
+          <span matTextPrefix>{{ currencySymbol }}&nbsp;</span>
+          <input matInput type="number" [(ngModel)]="amount" min="0.01" step="0.01" placeholder="0.00" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+          <mat-label>Descrizione (opzionale)</mat-label>
+          <input matInput [(ngModel)]="description" placeholder="Causale del trasferimento..." />
+        </mat-form-field>
+
+        <p class="text-xs text-gray-400 flex items-center gap-1">
+          <mat-icon style="font-size: 14px; width: 14px; height: 14px;">info</mat-icon>
+          L'account destinatario deve avere la stessa valuta ({{ currency() }})
+        </p>
+
+        @if (error()) {
+          <div class="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg text-sm">
+            <mat-icon style="font-size: 16px; width: 16px; height: 16px;">error</mat-icon>
+            {{ error() }}
+          </div>
+        }
+
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+          <button mat-button (click)="cancel()" class="w-full sm:flex-1">Annulla</button>
+          <button mat-raised-button (click)="submit()"
+                  [disabled]="loading() || !isValid"
+                  class="w-full sm:flex-1 !text-white !bg-violet-600">
+            @if (loading()) {
+              <div class="flex items-center justify-center gap-2">
+                <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Elaborazione...
+              </div>
+            } @else {
+              <div class="flex items-center justify-center gap-1">
+                <mat-icon style="font-size: 16px; width: 16px; height: 16px;">swap_horiz</mat-icon>
+                Trasferisci
+              </div>
+            }
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

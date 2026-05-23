@@ -94,4 +94,16 @@ export class TransactionService {
       this.API.transaction(accountId, transactionId)
     );
   }
+
+  transfer(
+    accountId: number,
+    targetAccountId: number,
+    amount: number,
+    description?: string,
+  ): Observable<{ message: string; withdrawal: TransactionModel; deposit: TransactionModel }> {
+    return this.http.post<{ message: string; withdrawal: TransactionModel; deposit: TransactionModel }>(
+      `${this.apiUrl}/accounts/${accountId}/transfers`,
+      { target_account_id: targetAccountId, amount, description },
+    );
+  }
 }

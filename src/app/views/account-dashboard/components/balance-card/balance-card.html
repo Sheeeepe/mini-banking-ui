@@ -24,5 +24,11 @@
       <mat-icon style="font-size: 18px; width: 18px; height: 18px;">remove</mat-icon>
       Preleva
     </button>
+    <button mat-raised-button
+            class="!bg-white/20 !text-white !font-semibold flex items-center gap-1 !rounded-lg"
+            [routerLink]="['/accounts', accountId, 'transfer']">
+      <mat-icon style="font-size: 18px; width: 18px; height: 18px;">swap_horiz</mat-icon>
+      Trasferisci
+    </button>
   </div>
 </div>
