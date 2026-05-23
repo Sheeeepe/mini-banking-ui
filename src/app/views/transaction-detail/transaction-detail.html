@@ -1,13 +1,17 @@
 
 <div class="min-h-[80vh] bg-gray-50 p-4 md:p-6">
   <div class="max-w-2xl mx-auto">
-    @if (error() && !transaction()) {
+    @if (transactionQuery.isError()) {
       <div class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
         <mat-icon class="text-red-400 text-4xl mb-3" style="font-size: 40px; width: 40px; height: 40px;">error_outline</mat-icon>
-        <p class="text-gray-600 mb-4">{{ error() }}</p>
+        <p class="text-gray-600 mb-4">Transazione non trovata</p>
         <button mat-stroked-button [routerLink]="['/accounts', accountId, 'transactions']">Torna ai movimenti</button>
       </div>
-    } @else if (transaction(); as t) {
+    } @else if (transactionQuery.isLoading()) {
+      <div class="flex justify-center py-16">
+        <div class="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+      </div>
+    } @else if (transactionQuery.data(); as t) {
       <!-- Back -->
       <button mat-button [routerLink]="['/accounts', accountId, 'transactions']" class="!mb-4 !text-gray-500">
         <mat-icon matIconPrefix>arrow_back</mat-icon>
@@ -62,9 +66,9 @@
               <input matInput [(ngModel)]="editDescription" />
             </mat-form-field>
             <div class="flex gap-2">
-              <button mat-raised-button color="primary" (click)="saveEdit()">
+              <button mat-raised-button color="primary" (click)="saveEdit()" [disabled]="updateMutation.isPending()">
                 <mat-icon matIconPrefix>save</mat-icon>
-                Salva
+                {{ updateMutation.isPending() ? 'Salvataggio...' : 'Salva' }}
               </button>
               <button mat-button (click)="cancelEdit()">Annulla</button>
             </div>
@@ -87,9 +91,9 @@
           </div>
         </div>
 
-        @if (error()) {
+        @if (mutationError()) {
           <div class="px-6 pb-4">
-            <p class="text-red-500 text-sm">{{ error() }}</p>
+            <p class="text-red-500 text-sm">{{ mutationError() }}</p>
           </div>
         }
 
@@ -100,9 +104,9 @@
               <mat-icon matIconPrefix>edit</mat-icon>
               Modifica
             </button>
-            <button mat-flat-button color="warn" (click)="delete()" [disabled]="deleting()">
+            <button mat-flat-button color="warn" (click)="delete()" [disabled]="deleteMutation.isPending()">
               <mat-icon matIconPrefix>delete</mat-icon>
-              {{ deleting() ? 'Eliminazione...' : 'Elimina' }}
+              {{ deleteMutation.isPending() ? 'Eliminazione...' : 'Elimina' }}
             </button>
           }
         </div>

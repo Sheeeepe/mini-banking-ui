@@ -1,7 +1,12 @@
-import { Component, Input, AfterViewInit, OnDestroy, signal, ViewChild, ElementRef, WritableSignal, inject } from '@angular/core';
+import {
+  Component, input, AfterViewInit, OnDestroy,
+  signal, ViewChild, ElementRef, inject, effect,
+} from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import Chart from 'chart.js/auto';
-import { TransactionService, TransactionQueryParams } from '../../../../services/transaction-service';
+import { firstValueFrom } from 'rxjs';
+import { injectQuery, injectQueryClient } from '@tanstack/angular-query-experimental';
+import { TransactionService, TransactionQueryParams, TransactionListResult } from '../../../../services/transaction-service';
 import { TransactionModel } from '../../../../models/transaction-model';
 
 type TimeRange = '1d' | '7d' | '30d' | '90d' | 'all';
@@ -15,22 +20,56 @@ const RANGE_DAYS: Record<TimeRange, number> = { '1d': 1, '7d': 7, '30d': 30, '90
   host: { class: 'block' },
 })
 export class BalanceChart implements AfterViewInit, OnDestroy {
-  @Input({ required: true }) accountId!: number;
-  @Input({ required: true }) currency!: string;
+  accountId = input.required<number>();
+  currency = input.required<string>();
 
-  @ViewChild('balanceChart') balanceChartCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('balanceChart') private balanceChartCanvas!: ElementRef<HTMLCanvasElement>;
 
-  private transactionService: TransactionService = inject(TransactionService);
-
-  timeRange: WritableSignal<TimeRange> = signal<TimeRange>('1d');
-  loading: WritableSignal<boolean> = signal(false);
-
+  private transactionService = inject(TransactionService);
+  private queryClient = injectQueryClient();
   private chart: Chart | null = null;
-  private rawTransactions: TransactionModel[] = [];
-  private loadedRange: TimeRange | null = null;
+  private canvasReady = signal(false);
+
+  timeRange = signal<TimeRange>('1d');
+
+  chartQuery = injectQuery(() => {
+    const range = this.timeRange();
+    const accountId = this.accountId();
+    const params = this.buildParams(range);
+
+    return {
+      queryKey: ['chart-transactions', accountId, range],
+      queryFn: (): Promise<TransactionListResult> => {
+        // If a broader range is already cached, filter client-side — no HTTP call
+        const broader: TimeRange[] = (['all', '90d', '30d', '7d'] as TimeRange[])
+          .filter(r => RANGE_DAYS[r] > RANGE_DAYS[range]);
+        for (const r of broader) {
+          const cached = this.queryClient.getQueryData<TransactionListResult>(
+            ['chart-transactions', accountId, r],
+          );
+          if (cached) {
+            return Promise.resolve({
+              ...cached,
+              transactions: this.filterToRange(cached.transactions, range),
+            });
+          }
+        }
+        return firstValueFrom(this.transactionService.query(accountId, params));
+      },
+      staleTime: 5 * 60_000,
+    };
+  });
+
+  constructor() {
+    effect(() => {
+      const data = this.chartQuery.data();
+      const ready = this.canvasReady();
+      if (data && ready) this.drawChart(data.transactions);
+    });
+  }
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.loadAndDraw());
+    this.canvasReady.set(true);
   }
 
   ngOnDestroy(): void {
@@ -38,8 +77,14 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
     this.chart = null;
   }
 
-  private rangeCovers(loaded: TimeRange, requested: TimeRange): boolean {
-    return RANGE_DAYS[loaded] >= RANGE_DAYS[requested];
+  private buildParams(range: TimeRange): TransactionQueryParams {
+    const params: TransactionQueryParams = { sort: 'created_at', order: 'asc', limit: 0 };
+    if (range !== 'all') {
+      const d = new Date();
+      d.setDate(d.getDate() - RANGE_DAYS[range]);
+      params.from = d.toISOString().split('T')[0];
+    }
+    return params;
   }
 
   private filterToRange(transactions: TransactionModel[], range: TimeRange): TransactionModel[] {
@@ -47,32 +92,6 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - RANGE_DAYS[range]);
     return transactions.filter(t => new Date(t.created_at) >= cutoff);
-  }
-
-  private loadAndDraw(): void {
-    const range = this.timeRange();
-
-    if (this.loadedRange !== null && this.rangeCovers(this.loadedRange, range)) {
-      this.drawChart(this.filterToRange(this.rawTransactions, range));
-      return;
-    }
-
-    this.loading.set(true);
-
-    const params: TransactionQueryParams = { sort: 'created_at', order: 'asc', limit: 0 };
-
-    if (range !== 'all') {
-      const d = new Date();
-      d.setDate(d.getDate() - RANGE_DAYS[range]);
-      params.from = d.toISOString().split('T')[0];
-    }
-
-    this.transactionService.query(this.accountId, params).subscribe(res => {
-      this.rawTransactions = res.transactions;
-      this.loadedRange = range;
-      this.loading.set(false);
-      this.drawChart(res.transactions);
-    });
   }
 
   private drawChart(transactions: TransactionModel[]): void {
@@ -86,7 +105,7 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
     if (!ctx) return;
 
     const labels = transactions.map(t =>
-      new Date(t.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+      new Date(t.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' }),
     );
     const values = transactions.map(t => t.balance_after);
 
@@ -110,8 +129,7 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
           segment: {
             borderColor: (ctx) => {
               if (ctx.p1DataIndex === undefined) return '#4f46e5';
-              const tx = transactions[ctx.p1DataIndex];
-              return tx?.type === 'deposit' ? '#16a34a' : '#dc2626';
+              return transactions[ctx.p1DataIndex]?.type === 'deposit' ? '#16a34a' : '#dc2626';
             },
           },
         }],
@@ -123,7 +141,7 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: (ctx) => `${Number(ctx.raw).toLocaleString('it-IT')} ${this.currency}`,
+              label: (ctx) => `${Number(ctx.raw).toLocaleString('it-IT')} ${this.currency()}`,
             },
           },
         },
@@ -148,6 +166,5 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
 
   setTimeRange(range: TimeRange): void {
     this.timeRange.set(range);
-    this.loadAndDraw();
   }
 }

@@ -5,9 +5,9 @@
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
       <div>
         <h1 class="text-xl font-bold text-gray-800">Movimenti</h1>
-        <p class="text-sm text-gray-500">Account #{{ accountId }}</p>
+        <p class="text-sm text-gray-500">Account #{{ accountId() }}</p>
       </div>
-      <button mat-stroked-button [routerLink]="['/accounts', accountId]" class="!text-sm">
+      <button mat-stroked-button [routerLink]="['/accounts', accountId()]" class="!text-sm">
         <mat-icon matIconPrefix>arrow_back</mat-icon>
         Dashboard
       </button>
@@ -33,19 +33,19 @@
       </div>
     </div>
 
-    @if (loading()) {
+    @if (transactionsQuery.isLoading()) {
       <div class="flex justify-center py-16">
         <div class="flex flex-col items-center gap-3">
           <div class="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
           <p class="text-gray-500 text-sm">Caricamento...</p>
         </div>
       </div>
-    } @else if (error()) {
+    } @else if (transactionsQuery.isError()) {
       <div class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
         <mat-icon class="text-red-400 text-4xl mb-3" style="font-size: 40px; width: 40px; height: 40px;">error_outline</mat-icon>
-        <p class="text-gray-600">{{ error() }}</p>
+        <p class="text-gray-600">Impossibile caricare le transazioni</p>
       </div>
-    } @else if (transactions().length === 0) {
+    } @else if ((transactionsQuery.data()?.transactions ?? []).length === 0) {
       <div class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
         <mat-icon class="text-gray-300 text-5xl mb-3" style="font-size: 48px; width: 48px; height: 48px;">receipt_long</mat-icon>
         <p class="text-gray-400 text-lg font-medium">Nessun movimento</p>
@@ -54,10 +54,11 @@
     } @else {
 
       <!-- Lista transazioni -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+           [class.opacity-60]="transactionsQuery.isFetching()">
         <div class="divide-y divide-gray-100">
-          @for (t of transactions(); track t.id) {
-            <a [routerLink]="['/accounts', accountId, 'transactions', t.id]"
+          @for (t of transactionsQuery.data()!.transactions; track t.id) {
+            <a [routerLink]="['/accounts', accountId(), 'transactions', t.id]"
                class="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50 transition-colors cursor-pointer group">
               <div class="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                 <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0"
@@ -80,9 +81,11 @@
                   <p class="font-bold text-sm whitespace-nowrap"
                      [class.text-green-600]="t.type === 'deposit'"
                      [class.text-red-600]="t.type === 'withdrawal'">
-                    {{ t.type === 'deposit' ? '+' : '-' }}{{ t.amount | currency: currency() }}
+                    {{ t.type === 'deposit' ? '+' : '-' }}{{ t.amount | currency: transactionsQuery.data()!.currency }}
                   </p>
-                  <p class="text-xs text-gray-400 hidden sm:block">Saldo: {{ t.balance_after | currency: currency() }}</p>
+                  <p class="text-xs text-gray-400 hidden sm:block">
+                    Saldo: {{ t.balance_after | currency: transactionsQuery.data()!.currency }}
+                  </p>
                 </div>
                 <mat-icon class="text-gray-300 group-hover:text-indigo-400 transition-colors">chevron_right</mat-icon>
               </div>
@@ -92,17 +95,21 @@
       </div>
 
       <!-- Paginazione -->
-      <div class="flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3">
-        <button mat-stroked-button (click)="prevPage()" [disabled]="currentPage() <= 1" class="!min-w-0 !px-3">
-          <mat-icon>chevron_left</mat-icon>
-        </button>
-        <span class="text-sm text-gray-500">
-          Pagina {{ currentPage() }} di {{ totalPages() }}
-        </span>
-        <button mat-stroked-button (click)="nextPage()" [disabled]="currentPage() >= totalPages()" class="!min-w-0 !px-3">
-          <mat-icon>chevron_right</mat-icon>
-        </button>
-      </div>
+      @if ((transactionsQuery.data()?.pages ?? 1) > 1) {
+        <div class="flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3">
+          <button mat-stroked-button (click)="prevPage()" [disabled]="currentPage() <= 1" class="!min-w-0 !px-3">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <span class="text-sm text-gray-500">
+            Pagina {{ currentPage() }} di {{ transactionsQuery.data()?.pages ?? 1 }}
+          </span>
+          <button mat-stroked-button (click)="nextPage()"
+                  [disabled]="currentPage() >= (transactionsQuery.data()?.pages ?? 1)"
+                  class="!min-w-0 !px-3">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+      }
     }
 
   </div>

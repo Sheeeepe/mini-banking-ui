@@ -1,13 +1,12 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
-import { Observable, of, tap } from 'rxjs';
+import { inject, Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { QueryClient } from '@tanstack/angular-query-experimental';
 import { environment } from '../../environments/environment.development';
 import { AccountModel } from '../models/account-model';
 
-type BalanceData = { account_id: number; owner_name: string; currency: string; balance: number };
-
+export type BalanceData = { account_id: number; owner_name: string; currency: string; balance: number };
 export type CachedAccount = Omit<AccountModel, 'created_at'>;
-
 export type AccountDetails = { id: number; owner_name: string; currency: string; created_at: string };
 
 type FiatConversionResult = {
@@ -26,47 +25,28 @@ type CreateAccountResult = { message: string; accountId: number; owner_name: str
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
-  private http: HttpClient = inject(HttpClient);
-  private readonly apiUrl: string = environment.apiUrl;
-
-  private readonly _balanceCache = signal<Map<number, BalanceData>>(new Map());
+  private http = inject(HttpClient);
+  private queryClient = inject(QueryClient);
+  private readonly apiUrl = environment.apiUrl;
 
   private readonly API = {
-    accounts: (): string => `${this.apiUrl}/accounts`,
-    account: (id: number): string => `${this.apiUrl}/accounts/${id}`,
-    balance: (id: number): string => `${this.apiUrl}/accounts/${id}/balance`,
-    convertFiat: (id: number, to: string): string => `${this.apiUrl}/accounts/${id}/balance/convert/fiat?to=${to}`,
-    convertCrypto: (id: number, to: string): string => `${this.apiUrl}/accounts/${id}/balance/convert/crypto?to=${to}`,
+    accounts: () => `${this.apiUrl}/accounts`,
+    account: (id: number) => `${this.apiUrl}/accounts/${id}`,
+    balance: (id: number) => `${this.apiUrl}/accounts/${id}/balance`,
+    convertFiat: (id: number, to: string) => `${this.apiUrl}/accounts/${id}/balance/convert/fiat?to=${to}`,
+    convertCrypto: (id: number, to: string) =>
+      `${this.apiUrl}/accounts/${id}/balance/convert/crypto?to=${to}`,
   };
 
   getBalance(id: number): Observable<BalanceData> {
-    const cached: BalanceData | undefined = this._balanceCache().get(id);
-    if (cached) return of(cached);
-
-    return this.http.get<BalanceData>(this.API.balance(id)).pipe(
-      tap(res => this._balanceCache.update(m => new Map(m).set(id, res)))
-    );
+    return this.http.get<BalanceData>(this.API.balance(id));
   }
 
+  /** Reads synchronously from TanStack cache — returns null if not yet fetched. */
   getCached(id: number): CachedAccount | null {
-    const d: BalanceData | undefined = this._balanceCache().get(id);
-    return d ? { id: d.account_id, owner_name: d.owner_name, currency: d.currency, balance: d.balance } : null;
-  }
-
-  invalidateBalance(id: number): void {
-    this._balanceCache.update((m: Map<number, BalanceData>) => {
-      const next: Map<number, BalanceData> = new Map(m);
-      next.delete(id);
-      return next;
-    });
-  }
-
-  patchCachedOwnerName(id: number, ownerName: string): void {
-    this._balanceCache.update((m: Map<number, BalanceData>) => {
-      const existing: BalanceData | undefined = m.get(id);
-      if (!existing) return m;
-      return new Map(m).set(id, { ...existing, owner_name: ownerName });
-    });
+    const d = this.queryClient.getQueryData<BalanceData>(['balance', id]);
+    if (!d) return null;
+    return { id: d.account_id, owner_name: d.owner_name, currency: d.currency, balance: d.balance };
   }
 
   getAccount(id: number): Observable<AccountDetails> {
@@ -75,7 +55,8 @@ export class AccountService {
 
   updateAccount(id: number, ownerName: string): Observable<{ message: string; account: AccountDetails }> {
     return this.http.put<{ message: string; account: AccountDetails }>(
-      this.API.account(id), { owner_name: ownerName }
+      this.API.account(id),
+      { owner_name: ownerName },
     );
   }
 
@@ -92,8 +73,6 @@ export class AccountService {
   }
 
   create(owner_name: string, currency: string): Observable<CreateAccountResult> {
-    return this.http.post<CreateAccountResult>(
-      this.API.accounts(), { owner_name, currency }
-    );
+    return this.http.post<CreateAccountResult>(this.API.accounts(), { owner_name, currency });
   }
 }

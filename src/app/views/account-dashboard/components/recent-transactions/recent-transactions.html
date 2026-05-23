@@ -1,26 +1,26 @@
 <div class="bg-white rounded-xl shadow-sm border border-gray-200">
   <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 pb-0 gap-2">
     <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Ultimi movimenti</h2>
-    <button mat-button [routerLink]="['/accounts', accountId, 'transactions']" class="!text-indigo-600">
+    <button mat-button [routerLink]="['/accounts', accountId(), 'transactions']" class="!text-indigo-600">
       Vedi tutti
       <mat-icon matIconSuffix>arrow_forward</mat-icon>
     </button>
   </div>
 
   <div class="p-4 sm:p-6">
-    @if (loading()) {
+    @if (transactionsQuery.isLoading()) {
       <div class="flex justify-center py-6">
         <div class="w-6 h-6 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
       </div>
-    } @else if (transactions().length === 0) {
+    } @else if ((transactionsQuery.data()?.transactions ?? []).length === 0) {
       <div class="text-center py-8">
         <mat-icon class="text-gray-300 mb-2" style="font-size: 40px; width: 40px; height: 40px;">receipt_long</mat-icon>
         <p class="text-gray-400">Nessuna transazione</p>
       </div>
     } @else {
       <div class="space-y-2">
-        @for (t of transactions(); track t.id) {
-          <a [routerLink]="['/accounts', accountId, 'transactions', t.id]"
+        @for (t of transactionsQuery.data()!.transactions; track t.id) {
+          <a [routerLink]="['/accounts', accountId(), 'transactions', t.id]"
              class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group">
             <div class="flex items-center gap-3">
               <div class="w-9 h-9 rounded-full flex items-center justify-center"
@@ -43,7 +43,7 @@
               <p class="text-sm font-semibold"
                  [class.text-green-600]="t.type === 'deposit'"
                  [class.text-red-600]="t.type === 'withdrawal'">
-                {{ t.type === 'deposit' ? '+' : '-' }}{{ t.amount | currency: currency() }}
+                {{ t.type === 'deposit' ? '+' : '-' }}{{ t.amount | currency: transactionsQuery.data()!.currency }}
               </p>
               <p class="text-xs text-gray-400 group-hover:text-indigo-500 transition-colors">Dettaglio &rarr;</p>
             </div>

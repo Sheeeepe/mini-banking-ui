@@ -12,14 +12,14 @@
       </div>
     </div>
 
-    @if (loading()) {
+    @if (accountQuery.isLoading()) {
       <div class="flex justify-center py-12">
         <div class="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
       </div>
-    } @else if (loadError()) {
+    } @else if (accountQuery.isError()) {
       <div class="flex items-center gap-2 text-red-600 bg-red-50 p-4 rounded-xl text-sm">
         <mat-icon>error</mat-icon>
-        {{ loadError() }}
+        Account non trovato
       </div>
     } @else {
 
@@ -29,15 +29,15 @@
         <div class="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p class="text-gray-400 mb-1">ID</p>
-            <p class="font-medium text-gray-700">#{{ account()?.id }}</p>
+            <p class="font-medium text-gray-700">#{{ accountQuery.data()?.id }}</p>
           </div>
           <div>
             <p class="text-gray-400 mb-1">Valuta</p>
-            <p class="font-medium text-gray-700">{{ account()?.currency }}</p>
+            <p class="font-medium text-gray-700">{{ accountQuery.data()?.currency }}</p>
           </div>
           <div class="col-span-2">
             <p class="text-gray-400 mb-1">Data creazione</p>
-            <p class="font-medium text-gray-700">{{ account()?.created_at | date: 'dd/MM/yyyy, HH:mm' }}</p>
+            <p class="font-medium text-gray-700">{{ accountQuery.data()?.created_at | date: 'dd/MM/yyyy, HH:mm' }}</p>
           </div>
         </div>
       </div>
@@ -64,9 +64,9 @@
         }
 
         <button mat-raised-button color="primary" (click)="save()"
-                [disabled]="saving() || !ownerName.trim() || !isDirty"
+                [disabled]="saveMutation.isPending() || !ownerName.trim() || !isDirty"
                 class="w-full">
-          @if (saving()) {
+          @if (saveMutation.isPending()) {
             <div class="flex items-center justify-center gap-2">
               <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               Salvataggio...
@@ -95,9 +95,9 @@
           </div>
         }
 
-        <button mat-stroked-button (click)="delete()" [disabled]="deleting()"
+        <button mat-stroked-button (click)="delete()" [disabled]="deleteMutation.isPending()"
                 class="w-full !text-red-600 !border-red-300">
-          @if (deleting()) {
+          @if (deleteMutation.isPending()) {
             <div class="flex items-center justify-center gap-2">
               <div class="w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full animate-spin"></div>
               Eliminazione...

@@ -10,7 +10,7 @@
     </mat-button-toggle-group>
   </div>
   <div class="relative h-64 sm:h-80">
-    @if (loading()) {
+    @if (chartQuery.isLoading()) {
       <div class="absolute inset-0 flex items-center justify-center bg-white/70 z-10 rounded-lg">
         <div class="w-7 h-7 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
       </div>

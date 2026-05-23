@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core';
+import { Component, effect, inject, signal, WritableSignal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -6,7 +6,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { AccountService, AccountDetails } from '../../services/account-service';
+import { injectQuery, injectMutation, injectQueryClient } from '@tanstack/angular-query-experimental';
+import { firstValueFrom } from 'rxjs';
+import { AccountService, BalanceData } from '../../services/account-service';
 import { SelectedAccountService } from '../../services/selected-account.service';
 
 @Component({
@@ -14,80 +16,75 @@ import { SelectedAccountService } from '../../services/selected-account.service'
   imports: [DatePipe, FormsModule, RouterLink, MatButtonModule, MatInputModule, MatFormFieldModule, MatIconModule],
   templateUrl: './account-settings.html',
 })
-export class AccountSettings implements OnInit {
-  private route: ActivatedRoute = inject(ActivatedRoute);
-  private router: Router = inject(Router);
-  private accountService: AccountService = inject(AccountService);
-  private selectedAccountSvc: SelectedAccountService = inject(SelectedAccountService);
+export class AccountSettings {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private accountService = inject(AccountService);
+  private selectedAccountSvc = inject(SelectedAccountService);
+  private queryClient = injectQueryClient();
 
   readonly accountId: number = Number(this.route.snapshot.paramMap.get('id'));
 
-  account: WritableSignal<AccountDetails | null> = signal<AccountDetails | null>(null);
   ownerName: string = '';
-
-  saving: WritableSignal<boolean> = signal(false);
   saveError: WritableSignal<string> = signal('');
   saveSuccess: WritableSignal<boolean> = signal(false);
-
-  deleting: WritableSignal<boolean> = signal(false);
   deleteError: WritableSignal<string> = signal('');
 
-  loading: WritableSignal<boolean> = signal(true);
-  loadError: WritableSignal<string> = signal('');
+  accountQuery = injectQuery(() => ({
+    queryKey: ['account', this.accountId],
+    queryFn: () => firstValueFrom(this.accountService.getAccount(this.accountId)),
+    enabled: this.accountId > 0,
+    staleTime: 5 * 60_000,
+  }));
 
-  ngOnInit(): void {
-    this.accountService.getAccount(this.accountId).subscribe({
-      next: (acc: AccountDetails) => {
-        this.account.set(acc);
-        this.ownerName = acc.owner_name;
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loadError.set('Account non trovato');
-        this.loading.set(false);
-      },
+  constructor() {
+    // Pre-fill ownerName once the query resolves (data arrives asynchronously)
+    effect(() => {
+      const data = this.accountQuery.data();
+      if (data && !this.ownerName) this.ownerName = data.owner_name;
     });
+  }
+
+  saveMutation = injectMutation(() => ({
+    mutationFn: (name: string) =>
+      firstValueFrom(this.accountService.updateAccount(this.accountId, name)),
+    onSuccess: (res) => {
+      // Update the balance cache in-place so the navbar reflects the new name immediately
+      this.queryClient.setQueryData<BalanceData>(['balance', this.accountId], (old) =>
+        old ? { ...old, owner_name: res.account.owner_name } : old,
+      );
+      this.queryClient.invalidateQueries({ queryKey: ['account', this.accountId] });
+      this.ownerName = res.account.owner_name;
+      this.saveSuccess.set(true);
+      this.saveError.set('');
+    },
+    onError: () => this.saveError.set('Errore durante il salvataggio'),
+  }));
+
+  deleteMutation = injectMutation(() => ({
+    mutationFn: () => firstValueFrom(this.accountService.deleteAccount(this.accountId)),
+    onSuccess: () => {
+      this.selectedAccountSvc.clear();
+      this.queryClient.removeQueries({ queryKey: ['balance', this.accountId] });
+      this.queryClient.removeQueries({ queryKey: ['account', this.accountId] });
+      this.router.navigate(['/accounts']);
+    },
+    onError: (err: any) =>
+      this.deleteError.set(err.error?.error || "Errore durante l'eliminazione"),
+  }));
+
+  get isDirty(): boolean {
+    return this.ownerName.trim() !== (this.accountQuery.data()?.owner_name ?? '');
   }
 
   save(): void {
     if (!this.ownerName.trim()) return;
-    this.saving.set(true);
-    this.saveError.set('');
     this.saveSuccess.set(false);
-
-    this.accountService.updateAccount(this.accountId, this.ownerName.trim()).subscribe({
-      next: (res) => {
-        this.account.set(res.account);
-        this.ownerName = res.account.owner_name;
-        this.accountService.patchCachedOwnerName(this.accountId, res.account.owner_name);
-        this.saving.set(false);
-        this.saveSuccess.set(true);
-      },
-      error: () => {
-        this.saveError.set('Errore durante il salvataggio');
-        this.saving.set(false);
-      },
-    });
+    this.saveMutation.mutate(this.ownerName.trim());
   }
 
   delete(): void {
-    if (!confirm('Eliminare definitivamente questo account? L\'operazione non è reversibile.')) return;
-    this.deleting.set(true);
-    this.deleteError.set('');
-
-    this.accountService.deleteAccount(this.accountId).subscribe({
-      next: () => {
-        this.selectedAccountSvc.clear();
-        this.router.navigate(['/accounts']);
-      },
-      error: (err) => {
-        this.deleteError.set(err.error?.error || 'Errore durante l\'eliminazione');
-        this.deleting.set(false);
-      },
-    });
-  }
-
-  get isDirty(): boolean {
-    return this.ownerName.trim() !== (this.account()?.owner_name ?? '');
+    if (!confirm("Eliminare definitivamente questo account? L'operazione non è reversibile.")) return;
+    this.deleteMutation.mutate();
   }
 }

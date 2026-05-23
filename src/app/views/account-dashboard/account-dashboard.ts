@@ -1,7 +1,9 @@
-import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal, WritableSignal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { injectQuery } from '@tanstack/angular-query-experimental';
+import { firstValueFrom } from 'rxjs';
 import { AccountService } from '../../services/account-service';
 import { SelectedAccountService } from '../../services/selected-account.service';
 import { BalanceCard } from './components/balance-card/balance-card';
@@ -19,36 +21,37 @@ import { RecentTransactions } from './components/recent-transactions/recent-tran
   styleUrl: './account-dashboard.css',
 })
 export class AccountDashboard implements OnInit {
-  private route: ActivatedRoute = inject(ActivatedRoute);
-  private router: Router = inject(Router);
-  private accountService: AccountService = inject(AccountService);
-  private selectedAccountSvc: SelectedAccountService = inject(SelectedAccountService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private accountService = inject(AccountService);
+  private selectedAccountSvc = inject(SelectedAccountService);
 
-  accountId: number = 0;
-  ownerName: WritableSignal<string> = signal('');
-  balance: WritableSignal<number> = signal(0);
-  currency: WritableSignal<string> = signal('EUR');
-  error: WritableSignal<string> = signal('');
-  loading: WritableSignal<boolean> = signal(true);
+  accountId: WritableSignal<number> = signal(0);
+
+  balanceQuery = injectQuery(() => ({
+    queryKey: ['balance', this.accountId()],
+    queryFn: () => firstValueFrom(this.accountService.getBalance(this.accountId())),
+    enabled: this.accountId() > 0,
+  }));
+
+  ownerName = computed(() => this.balanceQuery.data()?.owner_name ?? '');
+  balance = computed(() => this.balanceQuery.data()?.balance ?? 0);
+  currency = computed(() => this.balanceQuery.data()?.currency ?? 'EUR');
+
+  constructor() {
+    effect(() => {
+      if (this.balanceQuery.isSuccess()) {
+        this.selectedAccountSvc.select(this.accountId());
+      }
+    });
+  }
 
   ngOnInit(): void {
-    this.accountId = Number(this.route.snapshot.paramMap.get('id'));
-    if (!this.accountId) {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (!id) {
       this.router.navigate(['/accounts']);
       return;
     }
-    this.accountService.getBalance(this.accountId).subscribe({
-      next: (balance) => {
-        this.ownerName.set(balance.owner_name);
-        this.balance.set(balance.balance);
-        this.currency.set(balance.currency);
-        this.selectedAccountSvc.select(this.accountId);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Account non trovato');
-        this.loading.set(false);
-      },
-    });
+    this.accountId.set(id);
   }
 }
