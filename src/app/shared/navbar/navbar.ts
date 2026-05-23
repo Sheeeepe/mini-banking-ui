@@ -1,5 +1,5 @@
 import { Component, computed, CUSTOM_ELEMENTS_SCHEMA, EventEmitter, inject, Output, Signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
@@ -9,7 +9,7 @@ import { AccountService, CachedAccount } from '../../services/account-service';
 
 @Component({
   selector: 'app-navbar',
-  imports: [MatIconModule, MatButtonModule, MatMenuModule, MatTooltipModule],
+  imports: [RouterLink, MatIconModule, MatButtonModule, MatMenuModule, MatTooltipModule],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
