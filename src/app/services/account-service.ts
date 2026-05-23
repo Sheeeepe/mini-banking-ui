@@ -24,13 +24,6 @@ type CryptoConversionResult = {
 
 type CreateAccountResult = { message: string; accountId: number; owner_name: string; currency: string };
 
-type ApiRoutes = {
-  account: (id: number) => string;
-  balance: (id: number) => string;
-  convertFiat: (id: number, to: string) => string;
-  convertCrypto: (id: number, to: string) => string;
-};
-
 @Injectable({ providedIn: 'root' })
 export class AccountService {
   private http: HttpClient = inject(HttpClient);
@@ -38,7 +31,8 @@ export class AccountService {
 
   private readonly _balanceCache = signal<Map<number, BalanceData>>(new Map());
 
-  private readonly API: ApiRoutes = {
+  private readonly API = {
+    accounts: (): string => `${this.apiUrl}/accounts`,
     account: (id: number): string => `${this.apiUrl}/accounts/${id}`,
     balance: (id: number): string => `${this.apiUrl}/accounts/${id}/balance`,
     convertFiat: (id: number, to: string): string => `${this.apiUrl}/accounts/${id}/balance/convert/fiat?to=${to}`,
@@ -99,7 +93,7 @@ export class AccountService {
 
   create(owner_name: string, currency: string): Observable<CreateAccountResult> {
     return this.http.post<CreateAccountResult>(
-      `${this.apiUrl}/accounts`, { owner_name, currency }
+      this.API.accounts(), { owner_name, currency }
     );
   }
 }
