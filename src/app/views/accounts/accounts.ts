@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, WritableSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
@@ -23,16 +23,16 @@ import { CurrencyService } from '../../services/currency.service';
   styleUrl: './accounts.css',
 })
 export class Accounts {
-  private accountService = inject(AccountService);
-  private router = inject(Router);
+  private accountService: AccountService = inject(AccountService);
+  private router: Router = inject(Router);
 
-  accountId = 1;
-  ownerName = '';
-  currency = 'EUR';
-  error = signal('');
-  creating = signal(false);
+  accountId: number = 1;
+  ownerName: string = '';
+  currency: string = 'EUR';
+  error: WritableSignal<string> = signal('');
+  creating: WritableSignal<boolean> = signal(false);
 
-  readonly fiatCurrencies = inject(CurrencyService).fiatCurrencies;
+  readonly fiatCurrencies: string[] = inject(CurrencyService).fiatCurrencies;
 
   goToAccount(): void {
     if (this.accountId > 0) {

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DatePipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -20,19 +20,19 @@ import { TransactionModel } from '../../models/transaction-model';
   styleUrl: './transaction-detail.css',
 })
 export class TransactionDetail implements OnInit {
-  private route = inject(ActivatedRoute);
-  private transactionService = inject(TransactionService);
-  private accountService = inject(AccountService);
-  private router = inject(Router);
+  private route: ActivatedRoute = inject(ActivatedRoute);
+  private transactionService: TransactionService = inject(TransactionService);
+  private accountService: AccountService = inject(AccountService);
+  private router: Router = inject(Router);
 
-  transaction = signal<TransactionModel | null>(null);
-  editDescription = '';
-  editing = signal(false);
-  error = signal('');
-  deleting = signal(false);
+  transaction: WritableSignal<TransactionModel | null> = signal<TransactionModel | null>(null);
+  editDescription: string = '';
+  editing: WritableSignal<boolean> = signal(false);
+  error: WritableSignal<string> = signal('');
+  deleting: WritableSignal<boolean> = signal(false);
 
-  accountId = 0;
-  transactionId = 0;
+  accountId: number = 0;
+  transactionId: number = 0;
 
   get currency(): string {
     return this.accountService.getCached(this.accountId)?.currency ?? 'EUR';
@@ -50,7 +50,7 @@ export class TransactionDetail implements OnInit {
 
   private load(): void {
     this.transactionService.getById(this.accountId, this.transactionId).subscribe({
-      next: (t) => {
+      next: (t: TransactionModel) => {
         this.transaction.set(t);
         this.editDescription = t.description;
       },

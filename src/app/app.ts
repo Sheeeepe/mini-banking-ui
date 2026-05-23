@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, Signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -13,9 +13,9 @@ import { Sidebar } from './shared/sidebar/sidebar';
   styleUrl: './app.css'
 })
 export class App {
-  private breakpointObserver = inject(BreakpointObserver);
+  private breakpointObserver: BreakpointObserver = inject(BreakpointObserver);
 
-  isMobile = toSignal(
+  isMobile: Signal<boolean> = toSignal(
     this.breakpointObserver.observe([Breakpoints.Handset]).pipe(
       map(result => result.matches)
     ),

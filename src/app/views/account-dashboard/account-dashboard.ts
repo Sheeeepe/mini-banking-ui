@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -22,19 +22,19 @@ import { RecentTransactions } from './components/recent-transactions/recent-tran
   styleUrl: './account-dashboard.css',
 })
 export class AccountDashboard implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private accountService = inject(AccountService);
-  private transactionService = inject(TransactionService);
-  private selectedAccountSvc = inject(SelectedAccountService);
+  private route: ActivatedRoute = inject(ActivatedRoute);
+  private router: Router = inject(Router);
+  private accountService: AccountService = inject(AccountService);
+  private transactionService: TransactionService = inject(TransactionService);
+  private selectedAccountSvc: SelectedAccountService = inject(SelectedAccountService);
 
-  accountId = 0;
-  ownerName = signal('');
-  balance = signal(0);
-  currency = signal('EUR');
-  transactions = signal<TransactionModel[]>([]);
-  error = signal('');
-  loading = signal(true);
+  accountId: number = 0;
+  ownerName: WritableSignal<string> = signal('');
+  balance: WritableSignal<number> = signal(0);
+  currency: WritableSignal<string> = signal('EUR');
+  transactions: WritableSignal<TransactionModel[]> = signal<TransactionModel[]>([]);
+  error: WritableSignal<string> = signal('');
+  loading: WritableSignal<boolean> = signal(true);
 
   ngOnInit(): void {
     this.accountId = Number(this.route.snapshot.paramMap.get('id'));

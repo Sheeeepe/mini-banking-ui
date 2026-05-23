@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, Input, signal } from '@angular/core';
+import { Component, computed, effect, inject, Input, signal, Signal, WritableSignal } from '@angular/core';
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,6 +7,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { AccountService } from '../../../../services/account-service';
 import { CurrencyService } from '../../../../services/currency.service';
+
+type ConversionResult = { type: string; to: string; amount: number; rate?: number };
 
 @Component({
   selector: 'app-conversion-card',
@@ -23,25 +25,25 @@ export class ConversionCard {
   @Input({ required: true }) balance!: number;
   @Input({ required: true }) currency!: string;
 
-  private accountService = inject(AccountService);
-  private currencyService = inject(CurrencyService);
+  private accountService: AccountService = inject(AccountService);
+  private currencyService: CurrencyService = inject(CurrencyService);
 
-  converting = signal(false);
-  conversionResult = signal<{ type: string; to: string; amount: number; rate?: number } | null>(null);
-  conversionError = signal('');
+  converting: WritableSignal<boolean> = signal(false);
+  conversionResult: WritableSignal<ConversionResult | null> = signal<ConversionResult | null>(null);
+  conversionError: WritableSignal<string> = signal('');
 
-  selectedFiatCurrency = signal('USD');
-  selectedCryptoCurrency = signal('BTC');
+  selectedFiatCurrency: WritableSignal<string> = signal('USD');
+  selectedCryptoCurrency: WritableSignal<string> = signal('BTC');
 
-  fiatCurrencies = computed(() =>
+  fiatCurrencies: Signal<string[]> = computed(() =>
     this.currencyService.fiatCurrencies.filter(c => c !== this.currency)
   );
 
-  readonly cryptoSymbols = this.currencyService.cryptoSymbols;
+  readonly cryptoSymbols: string[] = this.currencyService.cryptoSymbols;
 
   constructor() {
     effect(() => {
-      const available = this.fiatCurrencies();
+      const available: string[] = this.fiatCurrencies();
       if (available.length > 0 && !available.includes(this.selectedFiatCurrency())) {
         this.selectedFiatCurrency.set(available[0]);
       }

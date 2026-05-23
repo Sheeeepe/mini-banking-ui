@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-export const FIAT_CURRENCIES = [
+export const FIAT_CURRENCIES: string[] = [
   'AUD', 'BGN', 'BRL', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK',
   'EUR', 'GBP', 'HKD', 'HUF', 'IDR', 'ILS', 'INR', 'ISK',
   'JPY', 'KRW', 'MXN', 'MYR', 'NOK', 'NZD', 'PHP', 'PLN',
@@ -8,7 +8,7 @@ export const FIAT_CURRENCIES = [
 ];
 
 // Ordered by trading volume
-export const CRYPTO_SYMBOLS = [
+export const CRYPTO_SYMBOLS: string[] = [
   'BTC', 'ETH', 'BNB', 'SOL', 'XRP',
   'ADA', 'AVAX', 'DOT', 'LINK', 'MATIC',
   'LTC', 'ATOM', 'UNI', 'XLM', 'NEAR',
@@ -17,6 +17,6 @@ export const CRYPTO_SYMBOLS = [
 
 @Injectable({ providedIn: 'root' })
 export class CurrencyService {
-  readonly fiatCurrencies = FIAT_CURRENCIES;
-  readonly cryptoSymbols = CRYPTO_SYMBOLS;
+  readonly fiatCurrencies: string[] = FIAT_CURRENCIES;
+  readonly cryptoSymbols: string[] = CRYPTO_SYMBOLS;
 }

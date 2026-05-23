@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal, Signal, WritableSignal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe, CurrencyPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,24 +16,24 @@ import { TransactionModel } from '../../models/transaction-model';
   styleUrl: './transactions.css',
 })
 export class Transactions implements OnInit {
-  private route = inject(ActivatedRoute);
-  private transactionService = inject(TransactionService);
+  private route: ActivatedRoute = inject(ActivatedRoute);
+  private transactionService: TransactionService = inject(TransactionService);
 
-  protected Math = Math;
+  protected Math: typeof Math = Math;
 
-  transactions = signal<TransactionModel[]>([]);
-  currency = signal<string>('EUR');
-  error = signal('');
-  loading = signal(true);
-  accountId = 0;
+  transactions: WritableSignal<TransactionModel[]> = signal<TransactionModel[]>([]);
+  currency: WritableSignal<string> = signal<string>('EUR');
+  error: WritableSignal<string> = signal('');
+  loading: WritableSignal<boolean> = signal(true);
+  accountId: number = 0;
 
-  pageSize = 10;
-  currentPage = signal(1);
+  pageSize: number = 10;
+  currentPage: WritableSignal<number> = signal(1);
 
-  totalPages = computed(() => Math.max(1, Math.ceil(this.transactions().length / this.pageSize)));
+  totalPages: Signal<number> = computed(() => Math.max(1, Math.ceil(this.transactions().length / this.pageSize)));
 
-  paginatedTransactions = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize;
+  paginatedTransactions: Signal<TransactionModel[]> = computed(() => {
+    const start: number = (this.currentPage() - 1) * this.pageSize;
     return this.transactions().slice(start, start + this.pageSize);
   });
 

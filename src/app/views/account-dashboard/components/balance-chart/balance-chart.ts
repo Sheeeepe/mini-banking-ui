@@ -1,4 +1,4 @@
-import { Component, Input, AfterViewInit, OnDestroy, signal, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, AfterViewInit, OnDestroy, signal, ViewChild, ElementRef, WritableSignal } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import Chart from 'chart.js/auto';
 import { TransactionModel } from '../../../../models/transaction-model';
@@ -17,7 +17,7 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
 
   @ViewChild('balanceChart') balanceChartCanvas!: ElementRef<HTMLCanvasElement>;
 
-  timeRange = signal<TimeRange>('all');
+  timeRange: WritableSignal<TimeRange> = signal<TimeRange>('all');
   private chart: Chart | null = null;
   private chartTransactions: TransactionModel[] = [];
   private chartLabels: string[] = [];
@@ -42,10 +42,10 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
     this.buildChartData();
     if (this.chartLabels.length === 0) return;
 
-    const ctx = this.balanceChartCanvas.nativeElement.getContext('2d');
+    const ctx: CanvasRenderingContext2D | null = this.balanceChartCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    const gradient: CanvasGradient = ctx.createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, 'rgba(79, 70, 229, 0.12)');
     gradient.addColorStop(1, 'rgba(79, 70, 229, 0.0)');
 
@@ -102,12 +102,12 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
   }
 
   private buildChartData(): void {
-    const range = this.timeRange();
+    const range: TimeRange = this.timeRange();
     let cutoff: Date | null = null;
 
     if (range !== 'all') {
-      const days = { '7d': 7, '30d': 30, '90d': 90 }[range];
-      const d = new Date();
+      const days: number = ({ '7d': 7, '30d': 30, '90d': 90 } as Record<string, number>)[range];
+      const d: Date = new Date();
       d.setDate(d.getDate() - days);
       cutoff = d;
     }

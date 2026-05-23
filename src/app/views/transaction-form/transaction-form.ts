@@ -1,5 +1,5 @@
 import { getCurrencySymbol } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,31 +17,31 @@ type OperationType = 'deposit' | 'withdraw';
   templateUrl: './transaction-form.html',
 })
 export class TransactionForm implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private transactionService = inject(TransactionService);
-  private accountService = inject(AccountService);
+  private route: ActivatedRoute = inject(ActivatedRoute);
+  private router: Router = inject(Router);
+  private transactionService: TransactionService = inject(TransactionService);
+  private accountService: AccountService = inject(AccountService);
 
   readonly type: OperationType = this.route.snapshot.data['type'];
-  readonly accountId = Number(this.route.snapshot.paramMap.get('id'));
+  readonly accountId: number = Number(this.route.snapshot.paramMap.get('id'));
 
-  get isDeposit() { return this.type === 'deposit'; }
+  get isDeposit(): boolean { return this.type === 'deposit'; }
 
-  readonly currency = signal(this.accountService.getCached(this.accountId)?.currency ?? 'EUR');
+  readonly currency: WritableSignal<string> = signal(this.accountService.getCached(this.accountId)?.currency ?? 'EUR');
 
   get currencySymbol(): string {
     return getCurrencySymbol(this.currency(), 'narrow');
   }
 
   amount: number | null = null;
-  description = '';
-  loading = signal(false);
-  error = signal('');
+  description: string = '';
+  loading: WritableSignal<boolean> = signal(false);
+  error: WritableSignal<string> = signal('');
 
   ngOnInit(): void {
     if (!this.accountService.getCached(this.accountId)) {
       this.accountService.getBalance(this.accountId).subscribe({
-        next: res => this.currency.set(res.currency),
+        next: (res) => this.currency.set(res.currency),
       });
     }
   }
