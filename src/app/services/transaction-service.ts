@@ -64,7 +64,7 @@ export class TransactionService {
     if (params.sort)  httpParams = httpParams.set('sort',  params.sort);
     if (params.order) httpParams = httpParams.set('order', params.order);
     if (params.page)  httpParams = httpParams.set('page',  params.page);
-    if (params.limit) httpParams = httpParams.set('limit', params.limit);
+    if (params.limit !== undefined) httpParams = httpParams.set('limit', params.limit);
     if (params.from)  httpParams = httpParams.set('from',  params.from);
     if (params.to)    httpParams = httpParams.set('to',    params.to);
 

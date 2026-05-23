@@ -4,7 +4,9 @@ import Chart from 'chart.js/auto';
 import { TransactionService, TransactionQueryParams } from '../../../../services/transaction-service';
 import { TransactionModel } from '../../../../models/transaction-model';
 
-type TimeRange = '7d' | '30d' | '90d' | 'all';
+type TimeRange = '1d' | '7d' | '30d' | '90d' | 'all';
+
+const RANGE_DAYS: Record<TimeRange, number> = { '1d': 1, '7d': 7, '30d': 30, '90d': 90, 'all': Infinity };
 
 @Component({
   selector: 'app-balance-chart',
@@ -20,11 +22,12 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
 
   private transactionService: TransactionService = inject(TransactionService);
 
-  timeRange: WritableSignal<TimeRange> = signal<TimeRange>('all');
+  timeRange: WritableSignal<TimeRange> = signal<TimeRange>('1d');
+  loading: WritableSignal<boolean> = signal(false);
+
   private chart: Chart | null = null;
-  private chartTransactions: TransactionModel[] = [];
-  private chartLabels: string[] = [];
-  private chartValues: number[] = [];
+  private rawTransactions: TransactionModel[] = [];
+  private loadedRange: TimeRange | null = null;
 
   ngAfterViewInit(): void {
     setTimeout(() => this.loadAndDraw());
@@ -35,48 +38,69 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
     this.chart = null;
   }
 
+  private rangeCovers(loaded: TimeRange, requested: TimeRange): boolean {
+    return RANGE_DAYS[loaded] >= RANGE_DAYS[requested];
+  }
+
+  private filterToRange(transactions: TransactionModel[], range: TimeRange): TransactionModel[] {
+    if (range === 'all') return transactions;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - RANGE_DAYS[range]);
+    return transactions.filter(t => new Date(t.created_at) >= cutoff);
+  }
+
   private loadAndDraw(): void {
-    const range: TimeRange = this.timeRange();
-    const params: TransactionQueryParams = { sort: 'created_at', order: 'asc', limit: 100 };
+    const range = this.timeRange();
+
+    if (this.loadedRange !== null && this.rangeCovers(this.loadedRange, range)) {
+      this.drawChart(this.filterToRange(this.rawTransactions, range));
+      return;
+    }
+
+    this.loading.set(true);
+
+    const params: TransactionQueryParams = { sort: 'created_at', order: 'asc', limit: 0 };
 
     if (range !== 'all') {
-      const days: number = ({ '7d': 7, '30d': 30, '90d': 90 } as Record<string, number>)[range];
-      const d: Date = new Date();
-      d.setDate(d.getDate() - days);
+      const d = new Date();
+      d.setDate(d.getDate() - RANGE_DAYS[range]);
       params.from = d.toISOString().split('T')[0];
     }
 
     this.transactionService.query(this.accountId, params).subscribe(res => {
-      this.chartTransactions = res.transactions;
-      this.chartLabels = res.transactions.map(t =>
-        new Date(t.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
-      );
-      this.chartValues = res.transactions.map(t => t.balance_after);
-      this.initChart();
+      this.rawTransactions = res.transactions;
+      this.loadedRange = range;
+      this.loading.set(false);
+      this.drawChart(res.transactions);
     });
   }
 
-  private initChart(): void {
+  private drawChart(transactions: TransactionModel[]): void {
     if (this.chart) {
       this.chart.destroy();
       this.chart = null;
     }
-    if (!this.balanceChartCanvas || this.chartLabels.length === 0) return;
+    if (!this.balanceChartCanvas || transactions.length === 0) return;
 
-    const ctx: CanvasRenderingContext2D | null = this.balanceChartCanvas.nativeElement.getContext('2d');
+    const ctx = this.balanceChartCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    const gradient: CanvasGradient = ctx.createLinearGradient(0, 0, 0, 300);
+    const labels = transactions.map(t =>
+      new Date(t.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+    );
+    const values = transactions.map(t => t.balance_after);
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, 'rgba(79, 70, 229, 0.12)');
     gradient.addColorStop(1, 'rgba(79, 70, 229, 0.0)');
 
     this.chart = new Chart(this.balanceChartCanvas.nativeElement, {
       type: 'line',
       data: {
-        labels: this.chartLabels,
+        labels,
         datasets: [{
           label: 'Saldo',
-          data: this.chartValues,
+          data: values,
           borderColor: '#4f46e5',
           backgroundColor: gradient,
           fill: true,
@@ -86,7 +110,7 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
           segment: {
             borderColor: (ctx) => {
               if (ctx.p1DataIndex === undefined) return '#4f46e5';
-              const tx = this.chartTransactions[ctx.p1DataIndex];
+              const tx = transactions[ctx.p1DataIndex];
               return tx?.type === 'deposit' ? '#16a34a' : '#dc2626';
             },
           },
