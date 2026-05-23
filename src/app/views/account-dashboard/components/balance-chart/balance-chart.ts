@@ -59,7 +59,7 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
           borderColor: '#4f46e5',
           backgroundColor: gradient,
           fill: true,
-          tension: 0.3,
+          tension: 0,
           pointRadius: 0,
           pointHitRadius: 10,
           segment: {
