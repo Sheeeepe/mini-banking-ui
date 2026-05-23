@@ -2,6 +2,7 @@
   <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
     <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Andamento saldo</h2>
     <mat-button-toggle-group [value]="timeRange()" (change)="setTimeRange($event.value)" class="!border-gray-200">
+      <mat-button-toggle value="1d"  class="!text-xs !h-8">1g</mat-button-toggle>
       <mat-button-toggle value="7d"  class="!text-xs !h-8">7g</mat-button-toggle>
       <mat-button-toggle value="30d" class="!text-xs !h-8">30g</mat-button-toggle>
       <mat-button-toggle value="90d" class="!text-xs !h-8">90g</mat-button-toggle>
@@ -9,6 +10,11 @@
     </mat-button-toggle-group>
   </div>
   <div class="relative h-64 sm:h-80">
+    @if (loading()) {
+      <div class="absolute inset-0 flex items-center justify-center bg-white/70 z-10 rounded-lg">
+        <div class="w-7 h-7 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+      </div>
+    }
     <canvas #balanceChart></canvas>
   </div>
 </div>

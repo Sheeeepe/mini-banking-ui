@@ -23,11 +23,9 @@
         [balance]="balance()"
         [currency]="currency()" />
 
-      @if (transactions().length > 0) {
-        <app-balance-chart
-          [transactions]="transactions()"
-          [currency]="currency()" />
-      }
+      <app-balance-chart
+        [accountId]="accountId"
+        [currency]="currency()" />
 
       <app-conversion-card
         [accountId]="accountId"
@@ -35,9 +33,7 @@
         [currency]="currency()" />
 
       <app-recent-transactions
-        [accountId]="accountId"
-        [transactions]="transactions()"
-        [currency]="currency()" />
+        [accountId]="accountId" />
 
     </div>
   </div>

@@ -1,15 +1,21 @@
-import { Component, computed, inject, OnInit, signal, Signal, WritableSignal } from '@angular/core';
+import { Component, inject, OnInit, signal, WritableSignal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe, CurrencyPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
-import { TransactionService } from '../../services/transaction-service';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { TransactionService, TransactionQueryParams } from '../../services/transaction-service';
 import { TransactionModel } from '../../models/transaction-model';
+
+type TypeFilter = 'all' | 'deposit' | 'withdrawal';
+type SortField  = 'created_at' | 'amount';
+type SortOrder  = 'asc' | 'desc';
 
 @Component({
   selector: 'app-transactions',
   imports: [
-    MatButtonModule, MatIconModule,
+    MatButtonModule, MatButtonToggleModule, MatIconModule, MatTooltipModule,
     RouterLink, DatePipe, CurrencyPipe,
   ],
   templateUrl: './transactions.html',
@@ -19,31 +25,44 @@ export class Transactions implements OnInit {
   private route: ActivatedRoute = inject(ActivatedRoute);
   private transactionService: TransactionService = inject(TransactionService);
 
-  protected Math: typeof Math = Math;
-
   transactions: WritableSignal<TransactionModel[]> = signal<TransactionModel[]>([]);
   currency: WritableSignal<string> = signal<string>('EUR');
   error: WritableSignal<string> = signal('');
   loading: WritableSignal<boolean> = signal(true);
   accountId: number = 0;
 
-  pageSize: number = 10;
+  readonly pageSize: number = 10;
   currentPage: WritableSignal<number> = signal(1);
+  total: WritableSignal<number> = signal(0);
+  totalPages: WritableSignal<number> = signal(1);
 
-  totalPages: Signal<number> = computed(() => Math.max(1, Math.ceil(this.transactions().length / this.pageSize)));
-
-  paginatedTransactions: Signal<TransactionModel[]> = computed(() => {
-    const start: number = (this.currentPage() - 1) * this.pageSize;
-    return this.transactions().slice(start, start + this.pageSize);
-  });
+  filterType: WritableSignal<TypeFilter> = signal<TypeFilter>('all');
+  filterSort: WritableSignal<SortField> = signal<SortField>('created_at');
+  filterOrder: WritableSignal<SortOrder> = signal<SortOrder>('desc');
 
   ngOnInit(): void {
     this.accountId = Number(this.route.snapshot.paramMap.get('id'));
     if (!this.accountId) return;
-    this.transactionService.getAll(this.accountId).subscribe({
+    this.loadTransactions();
+  }
+
+  private loadTransactions(): void {
+    this.loading.set(true);
+    const params: TransactionQueryParams = {
+      sort: this.filterSort(),
+      order: this.filterOrder(),
+      page: this.currentPage(),
+      limit: this.pageSize,
+    };
+    const type: TypeFilter = this.filterType();
+    if (type !== 'all') params.type = type;
+
+    this.transactionService.query(this.accountId, params).subscribe({
       next: (res) => {
         this.transactions.set(res.transactions);
         this.currency.set(res.currency);
+        this.total.set(res.total);
+        this.totalPages.set(res.pages);
         this.loading.set(false);
       },
       error: () => {
@@ -53,11 +72,33 @@ export class Transactions implements OnInit {
     });
   }
 
+  setType(type: TypeFilter): void {
+    this.filterType.set(type);
+    this.currentPage.set(1);
+    this.loadTransactions();
+  }
+
+  setSort(sort: SortField): void {
+    this.filterSort.set(sort);
+    this.currentPage.set(1);
+    this.loadTransactions();
+  }
+
+  toggleOrder(): void {
+    this.filterOrder.update((o: SortOrder) => o === 'desc' ? 'asc' : 'desc');
+    this.currentPage.set(1);
+    this.loadTransactions();
+  }
+
   prevPage(): void {
-    this.currentPage.update(p => Math.max(1, p - 1));
+    if (this.currentPage() <= 1) return;
+    this.currentPage.update((p: number) => p - 1);
+    this.loadTransactions();
   }
 
   nextPage(): void {
-    this.currentPage.update(p => Math.min(this.totalPages(), p + 1));
+    if (this.currentPage() >= this.totalPages()) return;
+    this.currentPage.update((p: number) => p + 1);
+    this.loadTransactions();
   }
 }
