@@ -30,6 +30,7 @@ export class ConversionCard implements OnInit {
   conversionResult = signal<{ type: string; to: string; amount: number; rate?: number } | null>(null);
   conversionError = signal('');
   fiatLoading = signal(false);
+  cryptoLoading = signal(false);
 
   selectedFiatCurrency = signal('USD');
   selectedCryptoCurrency = signal('BTC');
@@ -38,7 +39,7 @@ export class ConversionCard implements OnInit {
     this.currencyService.fiatCurrencies().filter(c => c !== this.currency)
   );
 
-  protected readonly cryptoSymbols = this.currencyService.cryptoSymbols;
+  readonly cryptoSymbols = this.currencyService.cryptoSymbols;
 
   constructor() {
     effect(() => {
@@ -52,7 +53,14 @@ export class ConversionCard implements OnInit {
   ngOnInit(): void {
     this.fiatLoading.set(true);
     this.currencyService.loadFiatCurrencies().subscribe({
-      next: () => this.fiatLoading.set(false),
+      complete: () => this.fiatLoading.set(false),
+      error: () => this.fiatLoading.set(false),
+    });
+
+    this.cryptoLoading.set(true);
+    this.currencyService.loadCryptoSymbols().subscribe({
+      complete: () => this.cryptoLoading.set(false),
+      error: () => this.cryptoLoading.set(false),
     });
   }
 

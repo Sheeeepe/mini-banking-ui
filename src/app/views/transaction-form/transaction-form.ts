@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { getCurrencySymbol } from '@angular/common';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,7 +16,7 @@ type OperationType = 'deposit' | 'withdraw';
   imports: [FormsModule, MatButtonModule, MatInputModule, MatFormFieldModule, MatIconModule],
   templateUrl: './transaction-form.html',
 })
-export class TransactionForm {
+export class TransactionForm implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private transactionService = inject(TransactionService);
@@ -26,10 +27,24 @@ export class TransactionForm {
 
   get isDeposit() { return this.type === 'deposit'; }
 
+  readonly currency = signal(this.accountService.getCached(this.accountId)?.currency ?? 'EUR');
+
+  get currencySymbol(): string {
+    return getCurrencySymbol(this.currency(), 'narrow');
+  }
+
   amount: number | null = null;
   description = '';
   loading = signal(false);
   error = signal('');
+
+  ngOnInit(): void {
+    if (!this.accountService.getCached(this.accountId)) {
+      this.accountService.getBalance(this.accountId).subscribe({
+        next: res => this.currency.set(res.currency),
+      });
+    }
+  }
 
   submit(): void {
     if (!this.amount || this.amount <= 0) return;

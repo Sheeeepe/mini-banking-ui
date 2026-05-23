@@ -23,7 +23,7 @@
       <div class="p-6 space-y-4">
         <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
           <mat-label>Importo</mat-label>
-          <span matTextPrefix>&euro; &nbsp;</span>
+          <span matTextPrefix>{{ currencySymbol }}&nbsp;</span>
           <input matInput type="number" [(ngModel)]="amount" min="0.01" step="0.01" placeholder="0.00" />
         </mat-form-field>
 

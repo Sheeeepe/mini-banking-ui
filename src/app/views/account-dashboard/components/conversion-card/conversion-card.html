@@ -29,14 +29,17 @@
     <div class="flex items-center gap-2">
       <mat-form-field appearance="outline" class="flex-1" subscriptSizing="dynamic">
         <mat-label>Criptovaluta</mat-label>
+        @if (cryptoLoading()) {
+          <mat-icon matSuffix class="animate-spin !text-gray-300">refresh</mat-icon>
+        }
         <mat-select [ngModel]="selectedCryptoCurrency()" (ngModelChange)="selectedCryptoCurrency.set($event)"
-                    [disabled]="converting()">
-          @for (c of cryptoSymbols; track c) {
+                    [disabled]="cryptoLoading() || converting()">
+          @for (c of cryptoSymbols(); track c) {
             <mat-option [value]="c">{{ c }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
-      <button mat-stroked-button (click)="convertCrypto()" [disabled]="converting()"
+      <button mat-stroked-button (click)="convertCrypto()" [disabled]="cryptoLoading() || converting()"
               class="!text-indigo-600 !border-indigo-300 shrink-0">
         <mat-icon matIconPrefix>currency_bitcoin</mat-icon>
         Converti
