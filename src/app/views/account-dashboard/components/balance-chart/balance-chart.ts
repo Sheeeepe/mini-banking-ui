@@ -1,6 +1,7 @@
-import { Component, Input, AfterViewInit, OnDestroy, signal, ViewChild, ElementRef, WritableSignal } from '@angular/core';
+import { Component, Input, AfterViewInit, OnDestroy, signal, ViewChild, ElementRef, WritableSignal, inject } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import Chart from 'chart.js/auto';
+import { TransactionService, TransactionQueryParams } from '../../../../services/transaction-service';
 import { TransactionModel } from '../../../../models/transaction-model';
 
 type TimeRange = '7d' | '30d' | '90d' | 'all';
@@ -12,10 +13,12 @@ type TimeRange = '7d' | '30d' | '90d' | 'all';
   host: { class: 'block' },
 })
 export class BalanceChart implements AfterViewInit, OnDestroy {
-  @Input({ required: true }) transactions!: TransactionModel[];
+  @Input({ required: true }) accountId!: number;
   @Input({ required: true }) currency!: string;
 
   @ViewChild('balanceChart') balanceChartCanvas!: ElementRef<HTMLCanvasElement>;
+
+  private transactionService: TransactionService = inject(TransactionService);
 
   timeRange: WritableSignal<TimeRange> = signal<TimeRange>('all');
   private chart: Chart | null = null;
@@ -24,7 +27,7 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
   private chartValues: number[] = [];
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.initChart());
+    setTimeout(() => this.loadAndDraw());
   }
 
   ngOnDestroy(): void {
@@ -32,15 +35,33 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
     this.chart = null;
   }
 
+  private loadAndDraw(): void {
+    const range: TimeRange = this.timeRange();
+    const params: TransactionQueryParams = { sort: 'created_at', order: 'asc', limit: 100 };
+
+    if (range !== 'all') {
+      const days: number = ({ '7d': 7, '30d': 30, '90d': 90 } as Record<string, number>)[range];
+      const d: Date = new Date();
+      d.setDate(d.getDate() - days);
+      params.from = d.toISOString().split('T')[0];
+    }
+
+    this.transactionService.query(this.accountId, params).subscribe(res => {
+      this.chartTransactions = res.transactions;
+      this.chartLabels = res.transactions.map(t =>
+        new Date(t.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
+      );
+      this.chartValues = res.transactions.map(t => t.balance_after);
+      this.initChart();
+    });
+  }
+
   private initChart(): void {
     if (this.chart) {
       this.chart.destroy();
       this.chart = null;
     }
-    if (!this.balanceChartCanvas) return;
-
-    this.buildChartData();
-    if (this.chartLabels.length === 0) return;
+    if (!this.balanceChartCanvas || this.chartLabels.length === 0) return;
 
     const ctx: CanvasRenderingContext2D | null = this.balanceChartCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
@@ -101,36 +122,8 @@ export class BalanceChart implements AfterViewInit, OnDestroy {
     });
   }
 
-  private buildChartData(): void {
-    const range: TimeRange = this.timeRange();
-    let cutoff: Date | null = null;
-
-    if (range !== 'all') {
-      const days: number = ({ '7d': 7, '30d': 30, '90d': 90 } as Record<string, number>)[range];
-      const d: Date = new Date();
-      d.setDate(d.getDate() - days);
-      cutoff = d;
-    }
-
-    this.chartTransactions = this.transactions
-      .filter(t => !cutoff || new Date(t.created_at) >= cutoff)
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-
-    this.chartLabels = this.chartTransactions.map(t =>
-      new Date(t.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' })
-    );
-    this.chartValues = this.chartTransactions.map(t => t.balance_after);
-  }
-
   setTimeRange(range: TimeRange): void {
     this.timeRange.set(range);
-    this.buildChartData();
-    if (!this.chart) {
-      this.initChart();
-      return;
-    }
-    this.chart.data.labels = this.chartLabels;
-    this.chart.data.datasets[0].data = this.chartValues;
-    this.chart.update();
+    this.loadAndDraw();
   }
 }

@@ -4,8 +4,6 @@ import { Observable, of, tap } from 'rxjs';
 import { environment } from '../../environments/environment.development';
 import { TransactionModel } from '../models/transaction-model';
 
-type TransactionCache = { currency: string; transactions: TransactionModel[] };
-
 type TransactionListResult = {
   account_id: number;
   currency: string;
@@ -17,7 +15,7 @@ type TransactionListResult = {
 };
 
 export type TransactionQueryParams = {
-  type?: 'deposit' | 'withdrawal' | 'transfer';
+  type?: 'deposit' | 'withdrawal';
   sort?: 'created_at' | 'amount';
   order?: 'asc' | 'desc';
   page?: number;
@@ -41,7 +39,7 @@ export class TransactionService {
   private http: HttpClient = inject(HttpClient);
   private readonly apiUrl: string = environment.apiUrl;
 
-  private readonly _cache = signal<Map<number, TransactionCache>>(new Map());
+  private readonly _queryCache = signal<Map<string, TransactionListResult>>(new Map());
 
   private readonly API = {
     transactions: (accountId: number): string => `${this.apiUrl}/accounts/${accountId}/transactions`,
@@ -52,28 +50,15 @@ export class TransactionService {
     transfers: (accountId: number): string => `${this.apiUrl}/accounts/${accountId}/transfers`,
   };
 
-  getAll(accountId: number): Observable<TransactionListResult> {
-    const cached: TransactionCache | undefined = this._cache().get(accountId);
-    if (cached) return of({
-      account_id: accountId,
-      currency: cached.currency,
-      total: cached.transactions.length,
-      page: 1,
-      limit: cached.transactions.length,
-      pages: 1,
-      transactions: cached.transactions,
-    });
-
-    return this.http.get<TransactionListResult>(
-      this.API.transactions(accountId)
-    ).pipe(
-      tap(res => this._cache.update(m =>
-        new Map(m).set(accountId, { currency: res.currency, transactions: res.transactions })
-      ))
-    );
+  private queryKey(accountId: number, params: TransactionQueryParams): string {
+    return `${accountId}|${params.type ?? ''}|${params.sort ?? ''}|${params.order ?? ''}|${params.page ?? ''}|${params.limit ?? ''}|${params.from ?? ''}|${params.to ?? ''}`;
   }
 
   query(accountId: number, params: TransactionQueryParams = {}): Observable<TransactionListResult> {
+    const key: string = this.queryKey(accountId, params);
+    const cached: TransactionListResult | undefined = this._queryCache().get(key);
+    if (cached) return of(cached);
+
     let httpParams: HttpParams = new HttpParams();
     if (params.type)  httpParams = httpParams.set('type',  params.type);
     if (params.sort)  httpParams = httpParams.set('sort',  params.sort);
@@ -82,22 +67,25 @@ export class TransactionService {
     if (params.limit) httpParams = httpParams.set('limit', params.limit);
     if (params.from)  httpParams = httpParams.set('from',  params.from);
     if (params.to)    httpParams = httpParams.set('to',    params.to);
-    return this.http.get<TransactionListResult>(this.API.transactions(accountId), { params: httpParams });
+
+    return this.http.get<TransactionListResult>(
+      this.API.transactions(accountId), { params: httpParams }
+    ).pipe(
+      tap(res => this._queryCache.update(m => new Map(m).set(key, res)))
+    );
   }
 
   getById(accountId: number, transactionId: number): Observable<TransactionModel> {
-    const cached: TransactionCache | undefined = this._cache().get(accountId);
-    if (cached) {
-      const tx: TransactionModel | undefined = cached.transactions.find(t => t.id === transactionId);
-      if (tx) return of(tx);
-    }
     return this.http.get<TransactionModel>(this.API.transaction(accountId, transactionId));
   }
 
   invalidate(accountId: number): void {
-    this._cache.update((m: Map<number, TransactionCache>) => {
-      const next: Map<number, TransactionCache> = new Map(m);
-      next.delete(accountId);
+    this._queryCache.update((m: Map<string, TransactionListResult>) => {
+      const next: Map<string, TransactionListResult> = new Map(m);
+      const prefix: string = `${accountId}|`;
+      for (const key of next.keys()) {
+        if (key.startsWith(prefix)) next.delete(key);
+      }
       return next;
     });
   }
