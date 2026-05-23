@@ -18,13 +18,6 @@ type TransactionMutationResult = {
   balance_after: number;
 };
 
-type ApiRoutes = {
-  transactions: (accountId: number) => string;
-  transaction: (accountId: number, transactionId: number) => string;
-  deposits: (accountId: number) => string;
-  withdrawals: (accountId: number) => string;
-};
-
 @Injectable({ providedIn: 'root' })
 export class TransactionService {
   private http: HttpClient = inject(HttpClient);
@@ -32,12 +25,13 @@ export class TransactionService {
 
   private readonly _cache = signal<Map<number, TransactionCache>>(new Map());
 
-  private readonly API: ApiRoutes = {
+  private readonly API = {
     transactions: (accountId: number): string => `${this.apiUrl}/accounts/${accountId}/transactions`,
     transaction: (accountId: number, transactionId: number): string =>
       `${this.apiUrl}/accounts/${accountId}/transactions/${transactionId}`,
     deposits: (accountId: number): string => `${this.apiUrl}/accounts/${accountId}/deposits`,
     withdrawals: (accountId: number): string => `${this.apiUrl}/accounts/${accountId}/withdrawals`,
+    transfers: (accountId: number): string => `${this.apiUrl}/accounts/${accountId}/transfers`,
   };
 
   getAll(accountId: number): Observable<TransactionListResult> {
@@ -102,7 +96,7 @@ export class TransactionService {
     description?: string,
   ): Observable<{ message: string; withdrawal: TransactionModel; deposit: TransactionModel }> {
     return this.http.post<{ message: string; withdrawal: TransactionModel; deposit: TransactionModel }>(
-      `${this.apiUrl}/accounts/${accountId}/transfers`,
+      this.API.transfers(accountId),
       { target_account_id: targetAccountId, amount, description },
     );
   }

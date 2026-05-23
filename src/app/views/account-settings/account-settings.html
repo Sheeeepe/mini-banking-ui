@@ -1,0 +1,116 @@
+<div class="min-h-[80vh] flex items-center justify-center p-6 bg-gray-50">
+  <div class="w-full max-w-lg space-y-6">
+
+    <!-- Header -->
+    <div class="flex items-center gap-3">
+      <button mat-icon-button [routerLink]="['/accounts', accountId]" class="text-gray-400">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">Impostazioni account</h1>
+        <p class="text-sm text-gray-400">Account #{{ accountId }}</p>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="flex justify-center py-12">
+        <div class="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+      </div>
+    } @else if (loadError()) {
+      <div class="flex items-center gap-2 text-red-600 bg-red-50 p-4 rounded-xl text-sm">
+        <mat-icon>error</mat-icon>
+        {{ loadError() }}
+      </div>
+    } @else {
+
+      <!-- Info read-only -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Informazioni</h2>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p class="text-gray-400 mb-1">ID</p>
+            <p class="font-medium text-gray-700">#{{ account()?.id }}</p>
+          </div>
+          <div>
+            <p class="text-gray-400 mb-1">Valuta</p>
+            <p class="font-medium text-gray-700">{{ account()?.currency }}</p>
+          </div>
+          <div class="col-span-2">
+            <p class="text-gray-400 mb-1">Data creazione</p>
+            <p class="font-medium text-gray-700">{{ account()?.created_at | date: 'dd/MM/yyyy, HH:mm' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit owner name -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Modifica</h2>
+        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
+          <mat-label>Intestatario</mat-label>
+          <input matInput [(ngModel)]="ownerName" (ngModelChange)="saveSuccess.set(false)" maxlength="255" />
+        </mat-form-field>
+
+        @if (saveError()) {
+          <div class="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg text-sm">
+            <mat-icon style="font-size: 16px; width: 16px; height: 16px;">error</mat-icon>
+            {{ saveError() }}
+          </div>
+        }
+        @if (saveSuccess()) {
+          <div class="flex items-center gap-2 text-green-700 bg-green-50 p-3 rounded-lg text-sm">
+            <mat-icon style="font-size: 16px; width: 16px; height: 16px;">check_circle</mat-icon>
+            Modifiche salvate
+          </div>
+        }
+
+        <button mat-raised-button color="primary" (click)="save()"
+                [disabled]="saving() || !ownerName.trim() || !isDirty"
+                class="w-full">
+          @if (saving()) {
+            <div class="flex items-center justify-center gap-2">
+              <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Salvataggio...
+            </div>
+          } @else {
+            <div class="flex items-center justify-center gap-1">
+              <mat-icon style="font-size: 16px; width: 16px; height: 16px;">save</mat-icon>
+              Salva modifiche
+            </div>
+          }
+        </button>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="bg-white rounded-xl shadow-sm border border-red-200 p-6 space-y-4">
+        <h2 class="text-sm font-semibold text-red-500 uppercase tracking-wider">Zona pericolosa</h2>
+        <p class="text-sm text-gray-500">
+          L'account può essere eliminato solo se il saldo è <span class="font-semibold">zero</span>.
+          L'operazione è irreversibile e cancella tutte le transazioni associate.
+        </p>
+
+        @if (deleteError()) {
+          <div class="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg text-sm">
+            <mat-icon style="font-size: 16px; width: 16px; height: 16px;">error</mat-icon>
+            {{ deleteError() }}
+          </div>
+        }
+
+        <button mat-stroked-button (click)="delete()" [disabled]="deleting()"
+                class="w-full !text-red-600 !border-red-300">
+          @if (deleting()) {
+            <div class="flex items-center justify-center gap-2">
+              <div class="w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full animate-spin"></div>
+              Eliminazione...
+            </div>
+          } @else {
+            <div class="flex items-center justify-center gap-1">
+              <mat-icon style="font-size: 16px; width: 16px; height: 16px;">delete_forever</mat-icon>
+              Elimina account
+            </div>
+          }
+        </button>
+      </div>
+
+    }
+  </div>
+</div>
