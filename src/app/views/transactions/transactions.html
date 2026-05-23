@@ -1,6 +1,6 @@
-
 <div class="min-h-[80vh] bg-gray-50 p-4 md:p-6">
   <div class="max-w-5xl mx-auto space-y-4">
+
     <!-- Header -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
       <div>
@@ -11,6 +11,26 @@
         <mat-icon matIconPrefix>arrow_back</mat-icon>
         Dashboard
       </button>
+    </div>
+
+    <!-- Filtri -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+      <mat-button-toggle-group [value]="filterType()" (change)="setType($event.value)" class="!border-0 !gap-1">
+        <mat-button-toggle value="all"        class="!rounded-lg !text-xs">Tutti</mat-button-toggle>
+        <mat-button-toggle value="deposit"    class="!rounded-lg !text-xs">Depositi</mat-button-toggle>
+        <mat-button-toggle value="withdrawal" class="!rounded-lg !text-xs">Prelievi</mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <div class="flex items-center gap-2">
+        <mat-button-toggle-group [value]="filterSort()" (change)="setSort($event.value)" class="!border-0 !gap-1">
+          <mat-button-toggle value="created_at" class="!rounded-lg !text-xs">Data</mat-button-toggle>
+          <mat-button-toggle value="amount"     class="!rounded-lg !text-xs">Importo</mat-button-toggle>
+        </mat-button-toggle-group>
+        <button mat-icon-button (click)="toggleOrder()" class="!text-gray-500"
+                [matTooltip]="filterOrder() === 'desc' ? 'Decrescente' : 'Crescente'">
+          <mat-icon>{{ filterOrder() === 'desc' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+        </button>
+      </div>
     </div>
 
     @if (loading()) {
@@ -29,16 +49,14 @@
       <div class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
         <mat-icon class="text-gray-300 text-5xl mb-3" style="font-size: 48px; width: 48px; height: 48px;">receipt_long</mat-icon>
         <p class="text-gray-400 text-lg font-medium">Nessun movimento</p>
-        <p class="text-gray-400 text-sm mt-1">Effettua un deposito o prelievo per vedere le transazioni</p>
-        <button mat-raised-button color="primary" [routerLink]="['/accounts', accountId]" class="mt-4">
-          Torna al dashboard
-        </button>
+        <p class="text-gray-400 text-sm mt-1">Nessuna transazione corrisponde ai filtri selezionati</p>
       </div>
     } @else {
+
       <!-- Lista transazioni -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="divide-y divide-gray-100">
-          @for (t of paginatedTransactions(); track t.id) {
+          @for (t of transactions(); track t.id) {
             <a [routerLink]="['/accounts', accountId, 'transactions', t.id]"
                class="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50 transition-colors cursor-pointer group">
               <div class="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
@@ -51,7 +69,9 @@
                   </mat-icon>
                 </div>
                 <div>
-                  <p class="font-medium text-gray-800">{{ t.description || (t.type === 'deposit' ? 'Deposito' : 'Prelievo') }}</p>
+                  <p class="font-medium text-gray-800">
+                    {{ t.description || (t.type === 'deposit' ? 'Deposito' : 'Prelievo') }}
+                  </p>
                   <p class="text-xs text-gray-400">{{ t.created_at | date:'dd MMM yyyy, HH:mm' }}</p>
                 </div>
               </div>
@@ -77,12 +97,13 @@
           <mat-icon>chevron_left</mat-icon>
         </button>
         <span class="text-sm text-gray-500">
-          {{ (currentPage() - 1) * pageSize + 1 }}–{{ Math.min(currentPage() * pageSize, transactions().length) }} di {{ transactions().length }}
+          {{ (currentPage() - 1) * pageSize + 1 }}–{{ (currentPage() - 1) * pageSize + transactions().length }} di {{ total() }}
         </span>
         <button mat-stroked-button (click)="nextPage()" [disabled]="currentPage() >= totalPages()" class="!min-w-0 !px-3">
           <mat-icon>chevron_right</mat-icon>
         </button>
       </div>
     }
+
   </div>
 </div>

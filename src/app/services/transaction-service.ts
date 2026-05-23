@@ -1,12 +1,30 @@
 import { inject, Injectable, signal } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, tap } from 'rxjs';
 import { environment } from '../../environments/environment.development';
-import { HttpClient } from '@angular/common/http';
 import { TransactionModel } from '../models/transaction-model';
 
 type TransactionCache = { currency: string; transactions: TransactionModel[] };
 
-type TransactionListResult = { account_id: number; currency: string; transactions: TransactionModel[] };
+type TransactionListResult = {
+  account_id: number;
+  currency: string;
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+  transactions: TransactionModel[];
+};
+
+export type TransactionQueryParams = {
+  type?: 'deposit' | 'withdrawal' | 'transfer';
+  sort?: 'created_at' | 'amount';
+  order?: 'asc' | 'desc';
+  page?: number;
+  limit?: number;
+  from?: string;
+  to?: string;
+};
 
 type TransactionMutationResult = {
   message: string;
@@ -36,7 +54,15 @@ export class TransactionService {
 
   getAll(accountId: number): Observable<TransactionListResult> {
     const cached: TransactionCache | undefined = this._cache().get(accountId);
-    if (cached) return of({ account_id: accountId, ...cached });
+    if (cached) return of({
+      account_id: accountId,
+      currency: cached.currency,
+      total: cached.transactions.length,
+      page: 1,
+      limit: cached.transactions.length,
+      pages: 1,
+      transactions: cached.transactions,
+    });
 
     return this.http.get<TransactionListResult>(
       this.API.transactions(accountId)
@@ -45,6 +71,18 @@ export class TransactionService {
         new Map(m).set(accountId, { currency: res.currency, transactions: res.transactions })
       ))
     );
+  }
+
+  query(accountId: number, params: TransactionQueryParams = {}): Observable<TransactionListResult> {
+    let httpParams: HttpParams = new HttpParams();
+    if (params.type)  httpParams = httpParams.set('type',  params.type);
+    if (params.sort)  httpParams = httpParams.set('sort',  params.sort);
+    if (params.order) httpParams = httpParams.set('order', params.order);
+    if (params.page)  httpParams = httpParams.set('page',  params.page);
+    if (params.limit) httpParams = httpParams.set('limit', params.limit);
+    if (params.from)  httpParams = httpParams.set('from',  params.from);
+    if (params.to)    httpParams = httpParams.set('to',    params.to);
+    return this.http.get<TransactionListResult>(this.API.transactions(accountId), { params: httpParams });
   }
 
   getById(accountId: number, transactionId: number): Observable<TransactionModel> {
