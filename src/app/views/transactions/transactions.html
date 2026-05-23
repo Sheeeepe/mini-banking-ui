@@ -97,7 +97,7 @@
           <mat-icon>chevron_left</mat-icon>
         </button>
         <span class="text-sm text-gray-500">
-          {{ (currentPage() - 1) * pageSize + 1 }}–{{ (currentPage() - 1) * pageSize + transactions().length }} di {{ total() }}
+          Pagina {{ currentPage() }} di {{ totalPages() }}
         </span>
         <button mat-stroked-button (click)="nextPage()" [disabled]="currentPage() >= totalPages()" class="!min-w-0 !px-3">
           <mat-icon>chevron_right</mat-icon>
